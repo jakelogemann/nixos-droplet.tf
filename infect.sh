@@ -2,6 +2,10 @@
 
 set -e -o pipefail
 
+# DigitalOcean doesn't seem to set USER while running user data
+export USER="root"
+export HOME="/root"
+
 makeConf() {
   # Skip everything if main config already present
   [[ -e /etc/nixos/configuration.nix ]] && return 0
@@ -15,24 +19,6 @@ makeConf() {
       && keys=$(sed -E 's/^.*((ssh|ecdsa)-[^[:space:]]+)[[:space:]]+([^[:space:]]+)([[:space:]]*.*)$/\1 \3\4/' "$trypath") \
       && break
   done
-
-  cat > /etc/nixos/configuration.nix << EOF
-{ ... }: {
-  imports = [
-    ./hardware-configuration.nix
-    ./networking.nix # generated at runtime by nixos-infect
-    $NIXOS_IMPORT
-  ];
-
-  boot.cleanTmpDir = true;
-  zramSwap.enable = ${zramswap};
-  networking.hostName = "$(hostname)";
-  services.openssh.enable = true;
-  users.users.root.openssh.authorizedKeys.keys = [$(while read -r line; do echo -n "
-    \"$line\" "; done <<< "$keys")
-  ];
-}
-EOF
 
   if isEFI; then
     bootcfg=$(cat << EOF
@@ -59,36 +45,8 @@ EOF
 $bootcfg
   boot.initrd.kernelModules = [ "nvme" ];
   fileSystems."/" = { device = "$rootfsdev"; fsType = "$rootfstype"; };
-  $swapcfg
 }
 EOF
-}
-
-checkExistingSwap() {
-  SWAPSHOW=$(swapon --show --noheadings --raw)
-  zramswap=true
-  swapcfg=""
-  if [[ -n "$SWAPSHOW" ]]; then
-    SWAP_DEVICE="${SWAPSHOW%% *}"
-    if [[ "$SWAP_DEVICE" == "/dev/"* ]]; then
-      zramswap=false
-      swapcfg="swapDevices = [ { device = \"${SWAP_DEVICE}\"; } ];"
-      NO_SWAP=true 
-    fi
-  fi
-}
-
-makeSwap() {
-  swapFile=$(mktemp /tmp/nixos-infect.XXXXX.swp)
-  dd if=/dev/zero "of=$swapFile" bs=1M count=$((1*1024))
-  chmod 0600 "$swapFile"
-  mkswap "$swapFile"
-  swapon -v "$swapFile"
-}
-
-removeSwap() {
-  swapoff -a
-  rm -vf /tmp/nixos-infect.*.swp
 }
 
 isEFI() {
@@ -121,10 +79,6 @@ prepareEnv() {
   #                   (get root mount)  (get partition or logical volume)
   rootfsdev=$(mount | grep "on / type" | awk '{print $1;}')
   rootfstype=$(df $rootfsdev --output=fstype | sed 1d)
-
-  # DigitalOcean doesn't seem to set USER while running user data
-  export USER="root"
-  export HOME="/root"
 
   # Nix installer tries to use sudo regardless of whether we're already uid 0
   #which sudo || { sudo() { eval "$@"; }; export -f sudo; }
@@ -171,16 +125,9 @@ infect() {
 }
 
 prepareEnv
-checkExistingSwap
-if [[ -z "$NO_SWAP" ]]; then
-    makeSwap # smallest (512MB) droplet needs extra memory!
-fi
 makeConf
 ./nix_network.sh
 infect
-if [[ -z "$NO_SWAP" ]]; then
-    removeSwap
-fi
 
 if [[ -z "$NO_REBOOT" ]]; then
   reboot

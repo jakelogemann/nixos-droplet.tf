@@ -7,13 +7,13 @@ You can add `nix-command flakes` to `experimental-features` in either `~/.config
 
 </details>
 
-### :star2: Want an interactive nix-shell?** 
+### :star2: Want an interactive shell? 
 
 ```sh
 nix develop 
 ```
 
-### :unamused: Want to just run single command (_plan_)?** 
+### :unamused: Want to just run single command (_plan_)? 
 Simply run `nix develop -c <command>`. 
 
 For instance:

@@ -16,10 +16,11 @@
         with (pkgsForSystem' system); {
           default = mkShell {
             shellHook = ''
-              touch .envrc || cp .envrc.example .envrc; source .envrc
+              test -e .envrc || cp .envrc.example .envrc; source .envrc
+              test -e terraform.tfvars || cp terraform.tfvars.example terraform.tfvars
               export TF_AUTO_APPLY=1
               export TF_INPUT=0
-              export TF_CLI_ARGS_apply="-refresh=false"
+              export TF_CLI_ARGS_apply="-refresh=false -input=false -auto-approve"
               export TF_CLI_ARGS_plan="-refresh=false"
             '';
             buildInputs = [
