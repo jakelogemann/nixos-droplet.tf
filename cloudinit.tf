@@ -19,7 +19,11 @@ data "cloudinit_config" "user_data" {
     filename     = "bootstrap.yml"
     content_type = "text/cloud-config"
     content = yamlencode({
+
+      # Create nix install group
       groups = ["nixbld"]
+
+      # Create nix install users
       users = [
         for id in range(0, 9) : {
           name          = "nixbld${id}"
@@ -30,14 +34,17 @@ data "cloudinit_config" "user_data" {
           groups        = ["nixbld"]
         }
       ]
+
+      # Write nixos files
       write_files = [{
-        path = "/etc/NIXOS_LUSTRATE"
-        content = "${join("\n", [
-          "etc/nixos",
-          "etc/resolv.conf",
-          "root/.nix-defexpr/channels",
-        ])}\n"
-        }, {
+
+        # System-wide nixos configuration
+        path        = "/etc/nixos/configuration.nix"
+        permissions = "0644"
+        content     = file("configuration.nix")
+      }, {
+
+        # System-wide nix configuration
         path        = "/etc/nix/nix.conf"
         permissions = "0644"
         content     = <<-NIX_CONF
@@ -53,17 +60,26 @@ data "cloudinit_config" "user_data" {
           allowed-users = root
           trusted-users = root
         NIX_CONF
-        }, {
+      }, {
+
+        # nixos lustrate - which files to persist across boot
+        path = "/etc/NIXOS_LUSTRATE"
+        content = "${join("\n", [
+          "etc/nixos",
+          "etc/resolv.conf",
+          "root/.nix-defexpr/channels",
+        ])}\n"
+      }, {
+
+        # Generated nixos metadata
         path        = "/etc/nixos/generated.toml"
         permissions = "0644"
         content     = <<-NIXOS_DATA
           networking.hostName = "${var.node_name}"
         NIXOS_DATA
-        }, {
-        path        = "/etc/nixos/configuration.nix"
-        permissions = "0644"
-        content     = file("configuration.nix")
       }]
+    
+      # Final bootstrapping
       runcmd = [
         "test -d /root/.config/nix || mkdir -vp /root/.config/nix",
         "touch /etc/NIXOS && ln -vfs /etc/nix/nix.conf /root/.config/nix/nix.conf",
