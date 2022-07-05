@@ -9,10 +9,6 @@ data "digitalocean_ssh_keys" "all" {
   }
 }
 
-variable "domain" {
-  default = "fnctl.io"
-}
-
 variable "node_name" {}
 variable "region" {
   default = "nyc3"
@@ -37,7 +33,7 @@ resource "digitalocean_droplet" "main" {
   monitoring        = false
   backups           = false
   droplet_agent     = false
-  graceful_shutdown = true
+  graceful_shutdown = false
   user_data         = data.cloudinit_config.user_data.rendered
   ssh_keys          = data.digitalocean_ssh_keys.all.ssh_keys.*.id
   lifecycle {
@@ -46,14 +42,5 @@ resource "digitalocean_droplet" "main" {
 }
 
 output "droplet" {
-  value = merge(digitalocean_droplet.main, {
-    domain     = var.domain
-    ssh_keys   = join(",", digitalocean_droplet.main.ssh_keys)
-    volume_ids = join(",", digitalocean_droplet.main.volume_ids)
-    tags       = try(join(",", digitalocean_droplet.main.tags), null)
-    commands = {
-      ssh_v4 = try(format("ssh root@%s", digitalocean_droplet.main.ipv4_address), "N/A")
-      ssh_v6 = try(format("ssh root@%s", digitalocean_droplet.main.ipv6_address), "N/A")
-    }
-  })
+  value = digitalocean_droplet.main
 }

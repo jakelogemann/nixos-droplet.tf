@@ -2,13 +2,8 @@ variable "nixos_version" {
   default = "22.05"
 }
 
-variable "zramswap" {
-  default     = false
-  description = "On  machines  with low memory, mitigates the tedious situation where the machine is out of memory and then it starts swapping to disk only to lose a large amount of disk bandwidth."
-}
-
-variable "extra_nixos_config" {
-  default = ""
+variable "domain" {
+  default = "fnctl.io"
 }
 
 data "cloudinit_config" "user_data" {
@@ -42,13 +37,13 @@ data "cloudinit_config" "user_data" {
         path        = "/etc/nixos/configuration.nix"
         permissions = "0644"
         content     = file("configuration.nix")
-      }, {
+        }, {
 
         # System-wide nix configuration
         path        = "/etc/nix/nix.conf"
         permissions = "0644"
         content     = <<-NIX_CONF
-          experimental-features = nix-command flakes ca-derivations
+          experimental-features = nix-command flakes
           build-users-group = nixbld
           auto-optimise-store = true
           download-attempts = 3
@@ -60,7 +55,7 @@ data "cloudinit_config" "user_data" {
           allowed-users = root
           trusted-users = root
         NIX_CONF
-      }, {
+        }, {
 
         # nixos lustrate - which files to persist across boot
         path = "/etc/NIXOS_LUSTRATE"
@@ -68,45 +63,91 @@ data "cloudinit_config" "user_data" {
           "etc/nixos",
           "etc/resolv.conf",
           "root/.nix-defexpr/channels",
+          "root/bin",
+          "root/.ssh",
         ])}\n"
-      }, {
 
-        # Generated nixos metadata
-        path        = "/etc/nixos/generated.toml"
+        }, {
+
+        # NixOS Metadata Regeneration
+        path        = "/root/bin/generate"
+        permissions = "0700"
+        content     = <<-NIXOS_METADATA_REGEN_SCRIPT
+          #!/usr/bin/env bash
+          IFS=$'\n'
+          rootfsdev="$(df "/" --output=source | sed 1d)"
+          rootfstype="$(df $rootfsdev --output=fstype | sed 1d)"
+          esp=$(df "/boot/efi" --output=source | sed 1d)
+          espfstype="$(df $esp --output=fstype | sed 1d)"
+          eth0_mac=$(ifconfig eth0 | awk '/ether/{print $2}')
+          eth1_mac=$(ifconfig eth1 | awk '/ether/{print $2}')
+          cat <<-__TOML_FILE_CONTENTS | tee /etc/nixos/generated.toml
+            fileSystems."/".device = "$rootfsdev"
+            fileSystems."/".fsType = "$rootfstype" 
+            systemd.network.links."10-eth0".matchConfig.PermanentMACAddress = "$eth0_mac"
+            systemd.network.links."10-eth0".linkConfig.Name = "eth0"
+            systemd.network.links."10-eth1".matchConfig.PermanentMACAddress = "$eth1_mac"
+            systemd.network.links."10-eth1".linkConfig.Name = "eth1"
+          __TOML_FILE_CONTENTS
+          NIXOS_METADATA_REGEN_SCRIPT
+        }, {
+        path        = "/etc/nixos/flake.nix"
         permissions = "0644"
-        content     = <<-NIXOS_DATA
-          networking.hostName = "${var.node_name}"
-        NIXOS_DATA
-      }]
-    
-      # Final bootstrapping
-      runcmd = [
-        "test -d /root/.config/nix || mkdir -vp /root/.config/nix",
-        "touch /etc/NIXOS && ln -vfs /etc/nix/nix.conf /root/.config/nix/nix.conf",
-        "curl -L https://nixos.org/nix/install | env HOME=/root sh",
-        ". /root/.nix-profile/etc/profile.d/nix.sh",
-        "nix-channel --remove nixpkgs && nix-channel --add 'https://nixos.org/channels/nixos-${var.nixos_version}' nixos && nix-channel --update",
-        "export NIXOS_CONFIG=/etc/nixos/configuration.nix",
-        join("  ", [
-          "nix-env --set",
-          "-I nixpkgs=/root/.nix-defexpr/channels/nixos",
-          "-f '<nixpkgs/nixos>'",
-          "-p /nix/var/nix/profiles/system",
-          "-A system",
-        ]),
-        ## Remove nix installed with curl | bash
-        # "rm -fv /nix/var/nix/profiles/default* && /nix/var/nix/profiles/system/sw/bin/nix-collect-garbage",
-        # Reify resolv.conf
-        "[[ -L /etc/resolv.conf ]] && mv -v /etc/resolv.conf /etc/resolv.conf.lnk && cat /etc/resolv.conf.lnk > /etc/resolv.conf",
-      ]
-    })
+        content = <<-FLAKE_NIX
+          {
+            description = "${var.node_name}";
+            inputs.nixpkgs.url = "github:nixos/nixpkgs/${var.nixos_version}";
+            outputs = { self, nixpkgs, ... }@inputs: {
+              nixosConfigurations."${var.node_name}" = nixpkgs.lib.nixosSystem {
+                system = "x86_64-linux";
+                modules = [ ./configuration.nix ];
+              };
+            };
+          }
+        FLAKE_NIX
 
+        }, {
+          path        = "/etc/nixos/flake.lock"
+            permissions = "0644"
+            content     = file("flake.lock")
+        }, {
+
+        # Bootstrap Script
+        path        = "/root/bin/setup"
+        permissions = "0750"
+        content = <<-NIXOS_SETUP_SCRIPT
+          #!/usr/bin/env bash
+          export HOME=/root USER=root PATH="$HOME/.nix-profile/bin:$PATH"
+          test -d $HOME/.config/nix || mkdir -vp $HOME/.config/nix
+          touch /etc/NIXOS && ln -vfs /etc/nix/nix.conf $HOME/.config/nix/nix.conf
+
+          curl -L https://nixos.org/nix/install | sh
+          . $HOME/.nix-profile/etc/profile.d/nix.sh && cd /etc/nixos
+
+          # Reify resolv.conf
+          [[ -L /etc/resolv.conf ]] && mv -v /etc/resolv.conf /etc/resolv.conf.lnk && cat /etc/resolv.conf.lnk > /etc/resolv.conf
+          # Remove nix installed with curl | bash
+          # rm -fv /nix/var/nix/profiles/default* && /nix/var/nix/profiles/system/sw/bin/nix-collect-garbage
+
+          # Switch to the new configuration on next boot & trigger reboot.
+          nix flake update \
+          && nix build --profile /nix/var/nix/profiles/system '/etc/nixos#nixosConfigurations.${var.node_name}.config.system.build.toplevel' \
+          && ./result/bin/switch-to-configuration boot && reboot
+        NIXOS_SETUP_SCRIPT
+  }]
+
+  # Final bootstrapping
+  runcmd = ["/root/bin/generate", "/root/bin/setup"]
+})
+}
+}
+
+output "ssh_commands" {
+  value = {
+    cloudinit_v4 = try(format("ssh root@%s tail -fn500 /var/log/cloud-init-output.log", digitalocean_droplet.main.ipv4_address), "N/A")
+    cloudinit_v6 = try(format("ssh root@%s tail -fn500 /var/log/cloud-init-output.log", digitalocean_droplet.main.ipv6_address), "N/A")
+    ssh_v4       = try(format("ssh root@%s", digitalocean_droplet.main.ipv4_address), "N/A")
+    ssh_v6       = try(format("ssh root@%s", digitalocean_droplet.main.ipv6_address), "N/A")
   }
-
-  # part {
-  #   content_type = "text/x-shellscript"
-  #   filename     = "infect.sh"
-  #   content      = file("${path.module}/infect.sh")
-  # }
 }
 
