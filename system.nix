@@ -73,6 +73,7 @@
   programs.htop.enable = true;
   programs.iftop.enable = true;
   programs.iotop.enable = true;
+  programs.mtr.enable = true;
   programs.ssh.forwardX11 = false;
   programs.ssh.setXAuthLocation = false;
   programs.ssh.startAgent = false;
@@ -114,13 +115,12 @@
   users.users.root.shell = pkgs.fish;
 
   programs.fish.interactiveShellInit = ''
-    set -u fish_greeting
     eval "$(${lib.getExe pkgs.navi} widget fish)"
     ${lib.getExe pkgs.zoxide} init fish | source
   '';
 
   environment.defaultPackages = with pkgs; [
-    (writeShellScriptBin "nixos-repl" "exec nix repl --read-only --quiet --offline --impure --no-write-lock-file --file '<nixpkgs/nixos>' \"$@\"")
+    (writeShellScriptBin "nixos-repl" "exec nix repl --quiet --offline --impure --no-write-lock-file --file '<nixpkgs/nixos>' \"$@\"")
     alejandra
     bat
     bpftools
