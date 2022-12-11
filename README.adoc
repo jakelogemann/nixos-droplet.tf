@@ -5,7 +5,7 @@
 :showtitle:
 :title: cloud
 :toc-title: Contents
-:toc: preamble
+:toc: left
 
 ifdef::env-github[]
 :tip-caption: :bulb:
