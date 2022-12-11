@@ -28,7 +28,7 @@ output:
     :showtitle:
     :title: cloud
     :toc-title: Contents
-    :toc: preamble
+    :toc: macro
 
     ifdef::env-github[]
     :tip-caption: :bulb:
@@ -44,6 +44,8 @@ output:
     :nixos: link:https://nixos.org[nixos]
 
     a {terraform} module to create a {nixos} droplet on {digitalocean}.
+
+    toc::[]
 
     {{ .Content }}
 
