@@ -11,8 +11,37 @@ terraform {
   }
 }
 
-variable "nixos_version" {
-  default = "22.05"
+locals {
+  ipv4_addresses = var.floating_ip ? digitalocean_floating_ip.main.*.ip_address : digitalocean_droplet.main.*.ipv4_address
+  ssh_command    = "ssh -oRequestTTY=yes -oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=accept-new"
+}
+
+output "ssh_commands" {
+  value = formatlist("%s root@%s", local.ssh_command, local.ipv4_addresses)
+}
+
+variable "floating_ip" {
+  default = false
+  type    = bool
+}
+
+variable "external_volumes" {
+  default = false
+  type    = bool
+}
+
+variable "host_count" {
+  default = 1
+  type    = number
+}
+
+variable "nix_channel" {
+  default = "nixos-unstable"
+  type    = string
+}
+
+variable "infect_script" {
+  default = "https://raw.githubusercontent.com/elitak/nixos-infect/master/nixos-infect"
   type    = string
 }
 
@@ -30,7 +59,6 @@ variable "region" {
   default = "nyc3"
   type    = string
 }
-
 
 variable "node_image" {
   default = "debian-11-x64"
@@ -54,6 +82,7 @@ data "digitalocean_vpc" "default" {
 }
 
 data "cloudinit_config" "user_data" {
+  count         = var.host_count
   gzip          = false
   base64_encode = false
 
@@ -90,17 +119,19 @@ data "cloudinit_config" "user_data" {
         path        = "/etc/nix/nix.conf"
         permissions = "0644"
         content     = <<-NIX_CONF
-          experimental-features = nix-command flakes
-          build-users-group = nixbld
+          allow-dirty = true
+          allowed-users = root
           auto-optimise-store = true
+          build-users-group = nixbld
           download-attempts = 3
           enforce-determinism = true
           eval-cache = true
+          experimental-features = nix-command flakes ca-derivations
           http-connections = 50
           log-lines = 30
-          warn-dirty = false
-          allowed-users = root
+          system-features = kvm
           trusted-users = root
+          warn-dirty = false
         NIX_CONF
         }, {
         # NixOS Metadata Regeneration
@@ -131,15 +162,16 @@ data "cloudinit_config" "user_data" {
       # Final bootstrapping
       runcmd = [
         "/root/bin/generate",
-        "curl https://raw.githubusercontent.com/elitak/nixos-infect/master/nixos-infect | PROVIDER=digitalocean NIXOS_IMPORT=./system.nix NIX_CHANNEL=nixos-unstable bash 2>&1 | tee /tmp/infect.log",
+        "curl ${var.infect_script} | PROVIDER=digitalocean NIXOS_IMPORT=./system.nix NIX_CHANNEL=${var.nix_channel} bash 2>&1 | tee /tmp/infect.log",
       ]
     })
   }
 }
 
 resource "digitalocean_droplet" "main" {
+  count             = var.host_count
   image             = var.node_image
-  name              = var.node_name
+  name              = format("%s-%d", var.node_name, count.index)
   region            = var.region
   vpc_uuid          = data.digitalocean_vpc.default.id
   size              = var.node_size
@@ -148,22 +180,26 @@ resource "digitalocean_droplet" "main" {
   backups           = false
   droplet_agent     = false
   graceful_shutdown = false
-  user_data         = data.cloudinit_config.user_data.rendered
+  resize_disk       = !var.external_volumes
+  user_data         = element(data.cloudinit_config.user_data.*.rendered, count.index)
+  volume_ids        = var.external_volumes ? [element(digitalocean_volume.main.*.id, count.index)] : []
   ssh_keys          = data.digitalocean_ssh_keys.all.ssh_keys.*.id
   lifecycle {
-    ignore_changes = [ssh_keys, tags]
+    ignore_changes = [ssh_keys]
   }
 }
 
-output "droplet" {
-  value = digitalocean_droplet.main
+resource "digitalocean_volume" "main" {
+  count                   = var.external_volumes ? var.host_count : 0
+  region                  = var.region
+  name                    = format("%s-%d", var.node_name, count.index)
+  description             = format("%s-%d", var.node_name, count.index)
+  size                    = 100
+  initial_filesystem_type = "ext4"
 }
 
-output "ssh_commands" {
-  value = {
-    cloudinit_v4 = try(format("ssh root@%s tail -fn500 /var/log/cloud-init-output.log", digitalocean_droplet.main.ipv4_address), "N/A")
-    cloudinit_v6 = try(format("ssh root@%s tail -fn500 /var/log/cloud-init-output.log", digitalocean_droplet.main.ipv6_address), "N/A")
-    ssh_v4       = try(format("ssh root@%s", digitalocean_droplet.main.ipv4_address), "N/A")
-    ssh_v6       = try(format("ssh root@%s", digitalocean_droplet.main.ipv6_address), "N/A")
-  }
+resource "digitalocean_floating_ip" "main" {
+  count      = var.floating_ip ? var.host_count : 0
+  droplet_id = element(digitalocean_droplet.main.*.id, count.index)
+  region     = element(digitalocean_droplet.main.*.region, count.index)
 }

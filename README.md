@@ -1,54 +1,19 @@
+# nixlet.tf
 
-## Nix Workflow
+a [terraform] module to create a [nixos] droplet on [digitalocean].
 
-<details><summary><b>NOTE</b> Assumes you're using "nix flakes"</summary>
+## usage
 
-You can add `nix-command flakes` to `experimental-features` in either `~/.config/nix/nix.conf` or `/etc/nix/nix.conf` (user-specific vs system-wide).
+1. install [terraform]
 
-</details>
+2. run `terraform init` to fetch required providers.
 
-### :star2: Want an interactive shell? 
+3. export `DIGITALOCEAN_TOKEN=...` to set your credentials.
 
-```sh
-nix develop 
-```
+4. plan a deployment with `terraform plan`.
 
-### :unamused: Want to just run single command (_plan_)? 
-Simply run `nix develop -c <command>`. 
+5. apply the plan with `terraform apply`.
 
-For instance:
-
-```sh
-nix develop -c terraform plan
-```
-
-### :smirk: Too lazy to type out `nix develop -c terraform plan`? 
-
-We alias `tf` to `terraform`, so you can run `nix develop -c tf ...`. 
-
-For example:
-
-```sh
-nix develop -c tf plan
-```
-
-### :astonished: Too lazy to type out `nix develop -c` when you're developing?
-
-Try using an alias, like this one _(change $PWD as needed)_.
-
-```sh
-alias tf="nix develop $PWD -c tf"
-```
-
-:magic_wand: Now you can just type `tf plan` (from _other_ directories too!) 
-
-### :construction: Need SSH?
-
-```sh
-# Adjust this command to find the node you need.
-target_ip=$(tf output -json cluster | jq -Ser '.nodes[].ipv4_address' | head -n1)
-
-# The root user should be pre-installed with developer SSH keys, so try something like:
-ssh "root@${target_ip}"
-```
-
+[terraform]: https://terraform.io
+[digitalocean]: https://digitalocean.com
+[nixos]: https://nixos.org
