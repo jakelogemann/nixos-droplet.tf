@@ -18,50 +18,60 @@ locals {
 
 output "ssh_commands" {
   value = formatlist("%s root@%s", local.ssh_command, local.ipv4_addresses)
+  description = "ssh commands to connect to each instance."
 }
 
 variable "floating_ip" {
   default = false
   type    = bool
+  description = "reserve a Floating IP for each host?"
 }
 
 variable "external_volumes" {
   default = false
   type    = bool
+  description = "provision a Block Volume for each host?"
 }
 
 variable "host_count" {
   default = 1
   type    = number
+  description = "how many hosts should be managed?"
 }
 
 variable "nix_channel" {
   default = "nixos-unstable"
   type    = string
+  description = "which nix channel should be used for managed hosts?"
 }
 
 variable "infect_script" {
   default = "https://raw.githubusercontent.com/elitak/nixos-infect/master/nixos-infect"
   type    = string
+  description = "where is the nixos-infect script?"
 }
 
 variable "node_name" {
   default = "nixlet"
   type    = string
+  description = "what name should be given to instance(s)?"
 }
 
 variable "region" {
   default = "nyc3"
   type    = string
+  description = "which digitalocean region should be used?"
 }
 
 variable "node_image" {
   default = "debian-11-x64"
+  description = "which digitalocean base image should be used?"
   type    = string
 }
 
 variable "node_size" {
   default = "s-1vcpu-1gb-intel"
+  description = "which digitalocean droplet size should be used?"
   type    = string
 }
 
@@ -145,7 +155,7 @@ data "cloudinit_config" "user_data" {
           cat <<-__TOML_FILE_CONTENTS | tee /etc/nixos/generated.toml
           networking.hostName = "${var.node_name}"
           fileSystems."/".device = "$rootfsdev"
-          fileSystems."/".fsType = "$rootfstype" 
+          fileSystems."/".fsType = "$rootfstype"
           systemd.network.links."10-eth0".matchConfig.PermanentMACAddress = "$eth0_mac"
           systemd.network.links."10-eth0".linkConfig.Name = "eth0"
           systemd.network.links."10-eth1".matchConfig.PermanentMACAddress = "$eth1_mac"

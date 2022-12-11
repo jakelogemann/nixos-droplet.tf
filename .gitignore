@@ -1,5 +1,6 @@
-.envrc*
 .direnv/*
+.envrc*
+.terraform*
 .terraform/*
 terraform.tfstate
 terraform.tfstate.backup
@@ -8,4 +9,4 @@ terraform.tfvars.json
 
 # Exceptions
 !.envrc.example
-.terraform*
+!.terraform-docs.yml
