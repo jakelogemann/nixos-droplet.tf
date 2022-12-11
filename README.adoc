@@ -5,7 +5,7 @@
 :showtitle:
 :title: cloud
 :toc-title: Contents
-:toc: left
+:toc: macro
 
 ifdef::env-github[]
 :tip-caption: :bulb:
@@ -21,6 +21,8 @@ endif::[]
 :nixos: link:https://nixos.org[nixos]
 
 a {terraform} module to create a {nixos} droplet on {digitalocean}.
+
+toc::[]
 
 == Requirements
 
