@@ -50,11 +50,6 @@ variable "node_name" {
   type    = string
 }
 
-variable "domain" {
-  default = "polis.dev"
-  type    = string
-}
-
 variable "region" {
   default = "nyc3"
   type    = string
@@ -184,6 +179,7 @@ resource "digitalocean_droplet" "main" {
   user_data         = element(data.cloudinit_config.user_data.*.rendered, count.index)
   volume_ids        = var.external_volumes ? [element(digitalocean_volume.main.*.id, count.index)] : []
   ssh_keys          = data.digitalocean_ssh_keys.all.ssh_keys.*.id
+  tags              = ["nixos"]
   lifecycle {
     ignore_changes = [ssh_keys]
   }
