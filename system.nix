@@ -114,10 +114,11 @@
   users.defaultUserShell = pkgs.fish;
   users.users.root.shell = pkgs.fish;
 
-  programs.fish.interactiveShellInit = ''
-    eval "$(${lib.getExe pkgs.navi} widget fish)"
-    ${lib.getExe pkgs.zoxide} init fish | source
-  '';
+  programs.fish.interactiveShellInit = builtins.concatStringsSep "\n" [
+    "eval \"$(navi widget fish)\""
+    "zoxide init fish | source"
+    "set -u fish_greeting"
+  ];
 
   environment.defaultPackages = with pkgs; [
     (writeShellScriptBin "nixos-repl" "exec nix repl --quiet --offline --impure --no-write-lock-file --file '<nixpkgs/nixos>' \"$@\"")
@@ -160,6 +161,18 @@
     enable = true;
     lfs.enable = true;
     config = {
+      alias.aliases = "config --show-scope --get-regexp alias";
+      alias.amend = "commit --amend";
+      alias.amendall = "commit --amend --all";
+      alias.amendit = "commit --amend --no-edit";
+      alias.branches = "branch --all";
+      alias.l = "log --pretty=oneline --graph --abbrev-commit";
+      alias.list-vars = "!${lib.getExe pkgs.bat} -l=ini --file-name 'git var -l (sorted)' <(git var -l | sort)";
+      alias.quick-rebase = "rebase --interactive --root --autosquash --autostash";
+      alias.remotes = "remote --verbose";
+      alias.unstage = "restore --staged";
+      alias.user = "config --show-scope --get-regexp user";
+      alias.wtf-config = "config --show-scope --show-origin --list --includes";
       apply.whitespace = "fix";
       branch.sort = "-committerdate";
       color.branch.current = "yellow bold";
@@ -178,19 +191,19 @@
       core.pager = lib.getExe pkgs.delta;
       core.untrackedcache = true;
       credential."https://github.*".helper = "${lib.getExe pkgs.gh} auth git-credential";
-      delta.decorations.minus-style = "red bold normal";
-      delta.decorations.plus-style = "green bold normal";
-      delta.decorations.minus-emph-style = "white bold red";
-      delta.decorations.minus-non-emph-style = "red bold normal";
-      delta.decorations.plus-emph-style = "white bold green";
-      delta.decorations.plus-non-emph-style = "green bold normal";
-      delta.decorations.file-style = "yellow bold none";
       delta.decorations.file-decoration-style = "yellow box";
-      delta.decorations.hunk-header-style = "magenta bold";
+      delta.decorations.file-style = "yellow bold none";
       delta.decorations.hunk-header-decoration-style = "magenta box";
-      delta.decorations.minus-empty-line-marker-style = "normal normal";
-      delta.decorations.plus-empty-line-marker-style = "normal normal";
+      delta.decorations.hunk-header-style = "magenta bold";
       delta.decorations.line-numbers-right-format = "{np:^4}│ ";
+      delta.decorations.minus-emph-style = "white bold red";
+      delta.decorations.minus-empty-line-marker-style = "normal normal";
+      delta.decorations.minus-non-emph-style = "red bold normal";
+      delta.decorations.minus-style = "red bold normal";
+      delta.decorations.plus-emph-style = "white bold green";
+      delta.decorations.plus-empty-line-marker-style = "normal normal";
+      delta.decorations.plus-non-emph-style = "green bold normal";
+      delta.decorations.plus-style = "green bold normal";
       delta.features = "line-numbers decorations";
       delta.line-numbers = true;
       diff.bin.textconv = "hexdump -v -C";
@@ -238,21 +251,6 @@
         "*.tar"
         "*.zip"
       ]);
-
-      alias = {
-        aliases = "config --show-scope --get-regexp alias";
-        amend = "commit --amend";
-        amendall = "commit --amend --all";
-        amendit = "commit --amend --no-edit";
-        branches = "branch --all";
-        l = "log --pretty=oneline --graph --abbrev-commit";
-        list-vars = "!${lib.getExe pkgs.bat} -l=ini --file-name 'git var -l (sorted)' <(git var -l | sort)";
-        quick-rebase = "rebase --interactive --root --autosquash --autostash";
-        remotes = "remote --verbose";
-        unstage = "restore --staged";
-        user = "config --show-scope --get-regexp user";
-        wtf-config = "config --show-scope --show-origin --list --includes";
-      };
     };
   };
 }
