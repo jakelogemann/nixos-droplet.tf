@@ -1,0 +1,46 @@
+# Configuration for pre-commit (https://pre-commit.com)
+---
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.3.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-case-conflict
+      - id: check-json
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: check-toml
+      - id: check-vcs-permalinks
+      - id: check-yaml
+      - id: destroyed-symlinks
+      - id: detect-private-key
+      - id: forbid-new-submodules
+      - id: pretty-format-json
+      - id: trailing-whitespace
+  - repo: local
+    hooks:
+      - id: terraform-validate
+        name: Ensure Terraform Configuration is Valid
+        entry: ./terraform.sh validate
+        language: system
+        pass_filenames: false
+        types: [terraform]
+      - id: terraform-fmt
+        name: Format Terraform Files
+        entry: ./terraform.sh fmt
+        language: system
+        types: [terraform]
+      - id: terraform-docs
+        name: Update Terraform Documentation
+        entry: ./terraform.sh docs
+        pass_filenames: false
+        language: system
+        types: [terraform]
+      - id: terraform-tfvars
+        name: Update Terraform Examples
+        entry: ./terraform.sh tfvars
+        pass_filenames: false
+        language: system
+        types: [terraform]
+
+# See https://pre-commit.com for more information.

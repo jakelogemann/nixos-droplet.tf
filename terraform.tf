@@ -117,7 +117,7 @@ data "cloudinit_config" "user_data" {
         path        = "/etc/nixos/system.nix"
         permissions = "0644"
         content     = file("system.nix")
-      }, {
+        }, {
         # System-wide nix configuration
         path        = "/etc/nix/nix.conf"
         permissions = "0644"
@@ -136,7 +136,7 @@ data "cloudinit_config" "user_data" {
           trusted-users = root
           warn-dirty = false
         NIX_CONF
-      }, {
+        }, {
         # NixOS Metadata Regeneration
         path        = "/root/bin/generate"
         permissions = "0700"
