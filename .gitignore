@@ -2,10 +2,10 @@
 .envrc*
 .terraform*
 .terraform/*
-terraform.tfstate
-terraform.tfstate.backup
-terraform.tfvars
-terraform.tfvars.json
+*.tfstate
+*.tfstate.backup
+*.tfvars
+*.tfvars.json
 
 # Exceptions
 !.envrc.example
