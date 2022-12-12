@@ -1,45 +1,46 @@
-terraform {
-  required_providers {
-    digitalocean = {
-      source  = "digitalocean/digitalocean"
-      version = "~> 2.0"
-    }
-    cloudinit = {
-      source  = "hashicorp/cloudinit"
-      version = "~> 2.2"
-    }
-  }
+variable "hostname" {
+  default     = "nixlet"
+  type        = string
+  description = "what name should be given to instance?"
 }
 
-locals {
-  ipv4_addresses = var.floating_ip ? digitalocean_floating_ip.main.*.ip_address : digitalocean_droplet.main.*.ipv4_address
-  ssh_command    = "ssh -oRequestTTY=yes -oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=accept-new"
+variable "vpc_name" {
+  default     = "default"
+  type        = string
+  description = "name of the VPC to target, if \"default\" will be appended with -$region"
 }
 
-output "ssh_commands" {
-  value       = formatlist("%s root@%s", local.ssh_command, local.ipv4_addresses)
-  description = "ssh commands to connect to each instance."
+variable "ssh_key_ids" {
+  default     = []
+  type        = list(number)
+  description = "ssh key ids to grant root ssh access. does not create them. if unspecified, all currently available ssh keys will be used (within the  project containing this API token)."
+}
+
+variable "region" {
+  default     = "nyc3"
+  type        = string
+  description = "which digitalocean region should be used?"
+}
+
+variable "droplet_size" {
+  default     = "s-1vcpu-1gb-intel"
+  description = "which digitalocean droplet size should be used?"
+  type        = string
 }
 
 variable "floating_ip" {
-  default     = false
+  default     = true
   type        = bool
-  description = "reserve a Floating IP for each host?"
+  description = "reserve a floating IP droplet host?"
 }
 
-variable "external_volumes" {
-  default     = false
-  type        = bool
-  description = "provision a Block Volume for each host?"
+variable "nixos_config" {
+  default     = ""
+  type        = string
+  description = "extra nixos config file, included in place of the default custom.nix in this module."
 }
 
-variable "host_count" {
-  default     = 1
-  type        = number
-  description = "how many hosts should be managed?"
-}
-
-variable "nix_channel" {
+variable "nixos_channel" {
   default     = "nixos-unstable"
   type        = string
   description = "which nix channel should be used for managed hosts?"
@@ -51,28 +52,28 @@ variable "infect_script" {
   description = "where is the nixos-infect script?"
 }
 
-variable "node_name" {
-  default     = "nixlet"
-  type        = string
-  description = "what name should be given to instance(s)?"
+variable "extra_volume" {
+  default     = false
+  type        = bool
+  description = "provision a Block Volume for host?"
 }
 
-variable "region" {
-  default     = "nyc3"
-  type        = string
-  description = "which digitalocean region should be used?"
+variable "extra_volume_size" {
+  default     = 100
+  type        = number
+  description = "how big should the extra volume be in GB?"
 }
 
-variable "node_image" {
+variable "image" {
   default     = "debian-11-x64"
-  description = "which digitalocean base image should be used?"
+  description = "change this at your own risk. it \"just works\" like this..."
   type        = string
 }
 
-variable "node_size" {
-  default     = "s-1vcpu-1gb-intel"
-  description = "which digitalocean droplet size should be used?"
-  type        = string
+variable "droplet_tags" {
+  default     = ["nixos"]
+  description = "tags to apply to droplet."
+  type        = list(string)
 }
 
 data "digitalocean_ssh_keys" "all" {
@@ -82,12 +83,7 @@ data "digitalocean_ssh_keys" "all" {
   }
 }
 
-data "digitalocean_vpc" "default" {
-  name = "default-${var.region}"
-}
-
 data "cloudinit_config" "user_data" {
-  count         = var.host_count
   gzip          = false
   base64_encode = false
 
@@ -113,10 +109,9 @@ data "cloudinit_config" "user_data" {
 
       # Write nixos files
       write_files = [{
-        # System-wide nixos configuration
-        path        = "/etc/nixos/system.nix"
+        path        = "/etc/nixos/custom.nix"
         permissions = "0644"
-        content     = file("system.nix")
+        content     = var.nixos_config == "" ? file("custom.nix") : var.nixos_config
         }, {
         # System-wide nix configuration
         path        = "/etc/nix/nix.conf"
@@ -136,74 +131,85 @@ data "cloudinit_config" "user_data" {
           trusted-users = root
           warn-dirty = false
         NIX_CONF
-        }, {
-        # NixOS Metadata Regeneration
-        path        = "/root/bin/generate"
-        permissions = "0700"
-        content     = <<-NIXOS_METADATA_REGEN_SCRIPT
-          #!/usr/bin/env bash
-          IFS=$'\n'
-          rootfsdev="$(df "/" --output=source | sed 1d)"
-          rootfstype="$(df $rootfsdev --output=fstype | sed 1d)"
-          esp=$(df "/boot/efi" --output=source | sed 1d)
-          espfstype="$(df $esp --output=fstype | sed 1d)"
-          eth0_mac=$(ifconfig eth0 | awk '/ether/{print $2}')
-          eth1_mac=$(ifconfig eth1 | awk '/ether/{print $2}')
-          test ! -r /etc/nixos/generated.toml || mv /etc/nixos/generated.toml /etc/nixos/generated.bkp.toml
-          cat <<-__TOML_FILE_CONTENTS | tee /etc/nixos/generated.toml
-          networking.hostName = "${var.node_name}"
-          fileSystems."/".device = "$rootfsdev"
-          fileSystems."/".fsType = "$rootfstype"
-          systemd.network.links."10-eth0".matchConfig.PermanentMACAddress = "$eth0_mac"
-          systemd.network.links."10-eth0".linkConfig.Name = "eth0"
-          systemd.network.links."10-eth1".matchConfig.PermanentMACAddress = "$eth1_mac"
-          systemd.network.links."10-eth1".linkConfig.Name = "eth1"
-          __TOML_FILE_CONTENTS
-          NIXOS_METADATA_REGEN_SCRIPT
       }]
 
       # Final bootstrapping
       runcmd = [
-        "/root/bin/generate",
-        "curl ${var.infect_script} | PROVIDER=digitalocean NIXOS_IMPORT=./system.nix NIX_CHANNEL=${var.nix_channel} bash 2>&1 | tee /tmp/infect.log",
+        "curl ${var.infect_script} | PROVIDER=digitalocean NIXOS_IMPORT=/etc/nixos/custom.nix NIX_CHANNEL=${var.nixos_channel} bash 2>&1 | tee /tmp/infect.log",
       ]
     })
   }
 }
 
+data "digitalocean_vpc" "main" {
+  name = var.vpc_name == "default" ? "default-${var.region}" : var.vpc_name
+}
+
 resource "digitalocean_droplet" "main" {
-  count             = var.host_count
-  image             = var.node_image
-  name              = format("%s-%d", var.node_name, count.index)
+  image             = var.image
+  name              = var.hostname
   region            = var.region
-  vpc_uuid          = data.digitalocean_vpc.default.id
-  size              = var.node_size
+  vpc_uuid          = data.digitalocean_vpc.main.id
+  size              = var.droplet_size
   ipv6              = true
   monitoring        = false
   backups           = false
   droplet_agent     = false
   graceful_shutdown = false
-  resize_disk       = !var.external_volumes
-  user_data         = element(data.cloudinit_config.user_data.*.rendered, count.index)
-  volume_ids        = var.external_volumes ? [element(digitalocean_volume.main.*.id, count.index)] : []
-  ssh_keys          = data.digitalocean_ssh_keys.all.ssh_keys.*.id
-  tags              = ["nixos"]
+  resize_disk       = !var.extra_volume
+  user_data         = data.cloudinit_config.user_data.rendered
+  volume_ids        = var.extra_volume ? [digitalocean_volume.extra[1].id] : []
+  ssh_keys          = length(var.ssh_key_ids) == 0 ? data.digitalocean_ssh_keys.all.ssh_keys.*.id : var.ssh_key_ids
+  tags              = var.droplet_tags
   lifecycle {
     ignore_changes = [ssh_keys]
   }
 }
 
-resource "digitalocean_volume" "main" {
-  count                   = var.external_volumes ? var.host_count : 0
+resource "digitalocean_volume" "extra" {
+  count                   = var.extra_volume ? 1 : 0
   region                  = var.region
-  name                    = format("%s-%d", var.node_name, count.index)
-  description             = format("%s-%d", var.node_name, count.index)
-  size                    = 100
+  name                    = "extra-${var.hostname}"
+  description             = format("Extra volume for %s.", var.hostname)
+  size                    = var.extra_volume_size
   initial_filesystem_type = "ext4"
 }
 
 resource "digitalocean_floating_ip" "main" {
-  count      = var.floating_ip ? var.host_count : 0
-  droplet_id = element(digitalocean_droplet.main.*.id, count.index)
-  region     = element(digitalocean_droplet.main.*.region, count.index)
+  count      = var.floating_ip ? 1 : 0
+  droplet_id = digitalocean_droplet.main.id
+  region     = digitalocean_droplet.main.region
+}
+
+output "ipv4_address" {
+  value       = var.floating_ip ? digitalocean_floating_ip.main[0].ip_address : digitalocean_droplet.main.ipv4_address
+  description = "public ipv4 address"
+}
+
+output "ipv6_address" {
+  value       = digitalocean_droplet.main.ipv6_address
+  description = "public ipv6 address"
+}
+
+output "ssh_username" {
+  value       = "root"
+  description = "ssh username"
+}
+
+output "remote_log_file" {
+  value       = "/var/log/cloud-init-output.log"
+  description = "logs from cloud-init will be in this path on the remote host. you can use something like `ssh root@<IP> tail -f <PATH>` to follow installation as it goes."
+}
+
+terraform {
+  required_providers {
+    digitalocean = {
+      source  = "digitalocean/digitalocean"
+      version = "~> 2.0"
+    }
+    cloudinit = {
+      source  = "hashicorp/cloudinit"
+      version = "~> 2.2"
+    }
+  }
 }

@@ -114,11 +114,11 @@
   users.defaultUserShell = pkgs.fish;
   users.users.root.shell = pkgs.fish;
 
-  programs.fish.interactiveShellInit = builtins.concatStringsSep "\n" [
+  programs.fish.interactiveShellInit = "${builtins.concatStringsSep "\n" [
     "eval \"$(navi widget fish)\""
     "zoxide init fish | source"
     "set -u fish_greeting"
-  ];
+  ]}\n";
 
   environment.defaultPackages = with pkgs; [
     (writeShellScriptBin "nixos-repl" "exec nix repl --quiet --offline --impure --no-write-lock-file --file '<nixpkgs/nixos>' \"$@\"")

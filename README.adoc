@@ -47,38 +47,76 @@ The following resources are used by this module:
 
 - https://registry.terraform.io/providers/digitalocean/digitalocean/latest/docs/resources/droplet[digitalocean_droplet.main] (resource)
 - https://registry.terraform.io/providers/digitalocean/digitalocean/latest/docs/resources/floating_ip[digitalocean_floating_ip.main] (resource)
-- https://registry.terraform.io/providers/digitalocean/digitalocean/latest/docs/resources/volume[digitalocean_volume.main] (resource)
+- https://registry.terraform.io/providers/digitalocean/digitalocean/latest/docs/resources/volume[digitalocean_volume.extra] (resource)
 - https://registry.terraform.io/providers/hashicorp/cloudinit/latest/docs/data-sources/config[cloudinit_config.user_data] (data source)
 - https://registry.terraform.io/providers/digitalocean/digitalocean/latest/docs/data-sources/ssh_keys[digitalocean_ssh_keys.all] (data source)
-- https://registry.terraform.io/providers/digitalocean/digitalocean/latest/docs/data-sources/vpc[digitalocean_vpc.default] (data source)
+- https://registry.terraform.io/providers/digitalocean/digitalocean/latest/docs/data-sources/vpc[digitalocean_vpc.main] (data source)
 
 == Optional Inputs
 
 The following input variables are optional (have default values):
 
-=== [[input_external_volumes]] <<input_external_volumes,external_volumes>>
+=== [[input_droplet_size]] <<input_droplet_size,droplet_size>>
 
-Description: provision a Block Volume for each host?
+Description: which digitalocean droplet size should be used?
+
+Type: `string`
+
+Default: `"s-1vcpu-1gb-intel"`
+
+=== [[input_droplet_tags]] <<input_droplet_tags,droplet_tags>>
+
+Description: tags to apply to droplet.
+
+Type: `list(string)`
+
+Default:
+[source,json]
+----
+[
+  "nixos"
+]
+----
+
+=== [[input_extra_volume]] <<input_extra_volume,extra_volume>>
+
+Description: provision a Block Volume for host?
 
 Type: `bool`
 
 Default: `false`
 
-=== [[input_floating_ip]] <<input_floating_ip,floating_ip>>
+=== [[input_extra_volume_size]] <<input_extra_volume_size,extra_volume_size>>
 
-Description: reserve a Floating IP for each host?
-
-Type: `bool`
-
-Default: `false`
-
-=== [[input_host_count]] <<input_host_count,host_count>>
-
-Description: how many hosts should be managed?
+Description: how big should the extra volume be in GB?
 
 Type: `number`
 
-Default: `1`
+Default: `100`
+
+=== [[input_floating_ip]] <<input_floating_ip,floating_ip>>
+
+Description: reserve a floating IP droplet host?
+
+Type: `bool`
+
+Default: `true`
+
+=== [[input_hostname]] <<input_hostname,hostname>>
+
+Description: what name should be given to instance?
+
+Type: `string`
+
+Default: `"nixlet"`
+
+=== [[input_image]] <<input_image,image>>
+
+Description: change this at your own risk. it "just works" like this...
+
+Type: `string`
+
+Default: `"debian-11-x64"`
 
 === [[input_infect_script]] <<input_infect_script,infect_script>>
 
@@ -88,7 +126,7 @@ Type: `string`
 
 Default: `"https://raw.githubusercontent.com/elitak/nixos-infect/master/nixos-infect"`
 
-=== [[input_nix_channel]] <<input_nix_channel,nix_channel>>
+=== [[input_nixos_channel]] <<input_nixos_channel,nixos_channel>>
 
 Description: which nix channel should be used for managed hosts?
 
@@ -96,29 +134,13 @@ Type: `string`
 
 Default: `"nixos-unstable"`
 
-=== [[input_node_image]] <<input_node_image,node_image>>
+=== [[input_nixos_config]] <<input_nixos_config,nixos_config>>
 
-Description: which digitalocean base image should be used?
-
-Type: `string`
-
-Default: `"debian-11-x64"`
-
-=== [[input_node_name]] <<input_node_name,node_name>>
-
-Description: what name should be given to instance(s)?
+Description: extra nixos config file, included in place of the default custom.nix in this module.
 
 Type: `string`
 
-Default: `"nixlet"`
-
-=== [[input_node_size]] <<input_node_size,node_size>>
-
-Description: which digitalocean droplet size should be used?
-
-Type: `string`
-
-Default: `"s-1vcpu-1gb-intel"`
+Default: `""`
 
 === [[input_region]] <<input_region,region>>
 
@@ -128,13 +150,41 @@ Type: `string`
 
 Default: `"nyc3"`
 
+=== [[input_ssh_key_ids]] <<input_ssh_key_ids,ssh_key_ids>>
+
+Description: ssh key ids to grant root ssh access. does not create them. if unspecified, all currently available ssh keys will be used (within the  project containing this API token).
+
+Type: `list(number)`
+
+Default: `[]`
+
+=== [[input_vpc_name]] <<input_vpc_name,vpc_name>>
+
+Description: name of the VPC to target, if "default" will be appended with -$region
+
+Type: `string`
+
+Default: `"default"`
+
 == Outputs
 
 The following outputs are exported:
 
-=== [[output_ssh_commands]] <<output_ssh_commands,ssh_commands>>
+=== [[output_ipv4_address]] <<output_ipv4_address,ipv4_address>>
 
-Description: ssh commands to connect to each instance.
+Description: public ipv4 address
+
+=== [[output_ipv6_address]] <<output_ipv6_address,ipv6_address>>
+
+Description: public ipv6 address
+
+=== [[output_remote_log_file]] <<output_remote_log_file,remote_log_file>>
+
+Description: logs from cloud-init will be in this path on the remote host. you can use something like `ssh root@<IP> tail -f <PATH>` to follow installation as it goes.
+
+=== [[output_ssh_username]] <<output_ssh_username,ssh_username>>
+
+Description: ssh username
 
 == Development
 
