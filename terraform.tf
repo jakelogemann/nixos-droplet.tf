@@ -17,62 +17,62 @@ locals {
 }
 
 output "ssh_commands" {
-  value = formatlist("%s root@%s", local.ssh_command, local.ipv4_addresses)
+  value       = formatlist("%s root@%s", local.ssh_command, local.ipv4_addresses)
   description = "ssh commands to connect to each instance."
 }
 
 variable "floating_ip" {
-  default = false
-  type    = bool
+  default     = false
+  type        = bool
   description = "reserve a Floating IP for each host?"
 }
 
 variable "external_volumes" {
-  default = false
-  type    = bool
+  default     = false
+  type        = bool
   description = "provision a Block Volume for each host?"
 }
 
 variable "host_count" {
-  default = 1
-  type    = number
+  default     = 1
+  type        = number
   description = "how many hosts should be managed?"
 }
 
 variable "nix_channel" {
-  default = "nixos-unstable"
-  type    = string
+  default     = "nixos-unstable"
+  type        = string
   description = "which nix channel should be used for managed hosts?"
 }
 
 variable "infect_script" {
-  default = "https://raw.githubusercontent.com/elitak/nixos-infect/master/nixos-infect"
-  type    = string
+  default     = "https://raw.githubusercontent.com/elitak/nixos-infect/master/nixos-infect"
+  type        = string
   description = "where is the nixos-infect script?"
 }
 
 variable "node_name" {
-  default = "nixlet"
-  type    = string
+  default     = "nixlet"
+  type        = string
   description = "what name should be given to instance(s)?"
 }
 
 variable "region" {
-  default = "nyc3"
-  type    = string
+  default     = "nyc3"
+  type        = string
   description = "which digitalocean region should be used?"
 }
 
 variable "node_image" {
-  default = "debian-11-x64"
+  default     = "debian-11-x64"
   description = "which digitalocean base image should be used?"
-  type    = string
+  type        = string
 }
 
 variable "node_size" {
-  default = "s-1vcpu-1gb-intel"
+  default     = "s-1vcpu-1gb-intel"
   description = "which digitalocean droplet size should be used?"
-  type    = string
+  type        = string
 }
 
 data "digitalocean_ssh_keys" "all" {
@@ -113,13 +113,11 @@ data "cloudinit_config" "user_data" {
 
       # Write nixos files
       write_files = [{
-
         # System-wide nixos configuration
         path        = "/etc/nixos/system.nix"
         permissions = "0644"
         content     = file("system.nix")
-        }, {
-
+      }, {
         # System-wide nix configuration
         path        = "/etc/nix/nix.conf"
         permissions = "0644"
@@ -138,7 +136,7 @@ data "cloudinit_config" "user_data" {
           trusted-users = root
           warn-dirty = false
         NIX_CONF
-        }, {
+      }, {
         # NixOS Metadata Regeneration
         path        = "/root/bin/generate"
         permissions = "0700"
