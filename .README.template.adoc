@@ -21,7 +21,7 @@ endif::[]
 :nixos: link:https://nixos.org[nixos]
 :nix: link:https://nixos.org[nix]
 
-a collection of {terraform} configuration & modules to manage {nixos} infrastructure, primarily on {digitalocean}.
+a {terraform} module to manage {nixos} droplet(s)on {digitalocean}.
 
 toc::[]
 
