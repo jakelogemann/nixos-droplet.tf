@@ -35,7 +35,7 @@ repos:
         entry: ./terraform.sh docs
         pass_filenames: false
         language: system
-        types: [terraform]
+        types: [terraform, asciidoc, yaml]
       - id: terraform-tfvars
         name: Update Terraform Examples
         entry: ./terraform.sh tfvars
