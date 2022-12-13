@@ -63,10 +63,6 @@ a {terraform} module to create a {nixos} droplet on {digitalocean}.
 |change this at your own risk. it "just works" like this...
 |`string`
 
-|[[input_infect_script]] <<input_infect_script,infect_script>>
-|where is the nixos-infect script?
-|`string`
-
 |[[input_nixos_channel]] <<input_nixos_channel,nixos_channel>>
 |which nix channel should be used for managed hosts?
 |`string`
@@ -97,6 +93,7 @@ a {terraform} module to create a {nixos} droplet on {digitalocean}.
 |[[output_ipv4_address]] <<output_ipv4_address,ipv4_address>> |public ipv4 address
 |[[output_ipv6_address]] <<output_ipv6_address,ipv6_address>> |public ipv6 address
 |[[output_remote_log_file]] <<output_remote_log_file,remote_log_file>> |logs from cloud-init will be in this path on the remote host. you can use something like `ssh root@<IP> tail -f <PATH>` to follow installation as it goes.
+|[[output_ssh_command]] <<output_ssh_command,ssh_command>> |ssh command
 |[[output_ssh_username]] <<output_ssh_username,ssh_username>> |ssh username
 |===
 
