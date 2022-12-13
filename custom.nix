@@ -44,6 +44,7 @@
   security.lockKernelModules = true;
   security.protectKernelImage = true;
   security.rtkit.enable = true;
+  services.do-agent.enable = true;
   services.journald.extraConfig = builtins.concatStringsSep "\n" ["SystemMaxUse=1G"];
   services.journald.forwardToSyslog = false;
   services.openssh.enable = true;
