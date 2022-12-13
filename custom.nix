@@ -170,9 +170,15 @@
       alias.list-vars = "!${lib.getExe pkgs.bat} -l=ini --file-name 'git var -l (sorted)' <(git var -l | sort)";
       alias.quick-rebase = "rebase --interactive --root --autosquash --autostash";
       alias.remotes = "remote --verbose";
+      alias.skip = "update-index --skip-worktree";
+      alias.unskip = "update-index --no-skip-worktree";
+      alias.undo-commit = "reset --hard ORIG_HEAD";
+      alias.list-skipped = "!git ls-files -v | grep \"^S\" | cut -c3-";
+      alias.repo-root = "rev-parse --show-toplevel";
+      alias.current-branch = "rev-parse --abbrev-ref HEAD";
       alias.unstage = "restore --staged";
       alias.user = "config --show-scope --get-regexp user";
-      alias.wtf-config = "config --show-scope --show-origin --list --includes";
+      alias.show-config = "config --show-scope --show-origin --list --includes";
       apply.whitespace = "fix";
       branch.sort = "-committerdate";
       color.branch.current = "yellow bold";
