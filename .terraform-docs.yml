@@ -1,4 +1,4 @@
-formatter: "markdown table"
+formatter: "markdown document"
 output-values: {enabled: false, from: ""}
 sort: { enabled: true, by: name }
 sections: { hide: [providers, resources, data-sources] }
