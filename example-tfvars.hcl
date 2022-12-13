@@ -1,3 +1,4 @@
+<!-- BEGIN_TF_DOCS -->
 
 # which digitalocean droplet size should be used?
 droplet_size = "s-1vcpu-1gb-intel"
@@ -36,3 +37,4 @@ ssh_key_ids = []
 
 # name of the VPC to target, if "default" will be appended with -$region
 vpc_name = "default"
+<!-- END_TF_DOCS -->
