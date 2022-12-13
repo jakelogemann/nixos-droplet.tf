@@ -88,8 +88,7 @@ rm -fv /nix/var/nix/profiles/default*
 [[ -L /etc/resolv.conf ]] && mv -v /etc/resolv.conf /etc/resolv.conf.lnk && cat /etc/resolv.conf.lnk > /etc/resolv.conf
 
 # Stage the Nix coup d'état
-touch /etc/NIXOS
-cat <<-__PROTECTED_FILES__ >/etc/NIXOS_LUSTRATE
+touch /etc/NIXOS && cat <<-__PROTECTED_FILES__ >/etc/NIXOS_LUSTRATE
 etc/nixos
 etc/resolv.conf
 root/.nix-defexpr/channels
