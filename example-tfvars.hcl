@@ -22,9 +22,6 @@ hostname = "nixlet"
 # change this at your own risk. it "just works" like this...
 image = "debian-11-x64"
 
-# where is the nixos-infect script?
-infect_script = "https://raw.githubusercontent.com/elitak/nixos-infect/master/nixos-infect"
-
 # which nix channel should be used for managed hosts?
 nixos_channel = "nixos-unstable"
 

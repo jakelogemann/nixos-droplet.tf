@@ -46,12 +46,6 @@ variable "nixos_channel" {
   description = "which nix channel should be used for managed hosts?"
 }
 
-variable "infect_script" {
-  default     = "https://raw.githubusercontent.com/elitak/nixos-infect/master/nixos-infect"
-  type        = string
-  description = "where is the nixos-infect script?"
-}
-
 variable "extra_volume" {
   default     = false
   type        = bool
@@ -109,9 +103,13 @@ data "cloudinit_config" "user_data" {
 
       # Write nixos files
       write_files = [{
+        path        = "/root/infect.sh"
+        permissions = "0600"
+        content     = file("${path.module}/infect.sh")
+        }, {
         path        = "/etc/nixos/custom.nix"
         permissions = "0644"
-        content     = var.nixos_config == "" ? file("custom.nix") : var.nixos_config
+        content     = var.nixos_config == "" ? file("${path.module}/custom.nix") : var.nixos_config
         }, {
         # System-wide nix configuration
         path        = "/etc/nix/nix.conf"
@@ -135,7 +133,8 @@ data "cloudinit_config" "user_data" {
 
       # Final bootstrapping
       runcmd = [
-        "curl ${var.infect_script} | PROVIDER=digitalocean NIXOS_IMPORT=/etc/nixos/custom.nix NIX_CHANNEL=${var.nixos_channel} bash 2>&1 | tee /tmp/infect.log",
+        "apt-get install -qqy jq",
+        "env HOME=/root USER=root NIXOS_IMPORT=./custom.nix NIX_CHANNEL=${var.nixos_channel} bash /root/infect.sh 2>&1 | tee /tmp/infect.log",
       ]
     })
   }
@@ -175,14 +174,21 @@ resource "digitalocean_volume" "extra" {
   initial_filesystem_type = "ext4"
 }
 
+
 resource "digitalocean_floating_ip" "main" {
   count      = var.floating_ip ? 1 : 0
   droplet_id = digitalocean_droplet.main.id
   region     = digitalocean_droplet.main.region
 }
 
+locals {
+  ssh_username = "root"
+  ssh_options  = "-oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=accept-new"
+  ipv4_address = var.floating_ip ? digitalocean_floating_ip.main[0].ip_address : digitalocean_droplet.main.ipv4_address
+}
+
 output "ipv4_address" {
-  value       = var.floating_ip ? digitalocean_floating_ip.main[0].ip_address : digitalocean_droplet.main.ipv4_address
+  value       = local.ipv4_address
   description = "public ipv4 address"
 }
 
@@ -194,6 +200,11 @@ output "ipv6_address" {
 output "ssh_username" {
   value       = "root"
   description = "ssh username"
+}
+
+output "ssh_command" {
+  value       = format("ssh %s %s@%s", local.ssh_options, local.ssh_username, local.ipv4_address)
+  description = "ssh command"
 }
 
 output "remote_log_file" {
