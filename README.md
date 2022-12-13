@@ -33,20 +33,20 @@ a [terraform] module to create a [nixos] droplet on [digitalocean].
 
 ## Inputs
 
-| Name | Description | Type |
-|------|-------------|------|
-| <a name="input_droplet_size"></a> [droplet\_size](#input\_droplet\_size) | which digitalocean droplet size should be used? | `string` |
-| <a name="input_droplet_tags"></a> [droplet\_tags](#input\_droplet\_tags) | tags to apply to droplet. | `list(string)` |
-| <a name="input_extra_volume"></a> [extra\_volume](#input\_extra\_volume) | provision a Block Volume for host? | `bool` |
-| <a name="input_extra_volume_size"></a> [extra\_volume\_size](#input\_extra\_volume\_size) | how big should the extra volume be in GB? | `number` |
-| <a name="input_floating_ip"></a> [floating\_ip](#input\_floating\_ip) | reserve a floating IP droplet host? | `bool` |
-| <a name="input_hostname"></a> [hostname](#input\_hostname) | what name should be given to instance? | `string` |
-| <a name="input_image"></a> [image](#input\_image) | change this at your own risk. it "just works" like this... | `string` |
-| <a name="input_nixos_channel"></a> [nixos\_channel](#input\_nixos\_channel) | which nix channel should be used for managed hosts? | `string` |
-| <a name="input_nixos_config"></a> [nixos\_config](#input\_nixos\_config) | extra nixos config file, included in place of the default custom.nix in this module. | `string` |
-| <a name="input_region"></a> [region](#input\_region) | which digitalocean region should be used? | `string` |
-| <a name="input_ssh_key_ids"></a> [ssh\_key\_ids](#input\_ssh\_key\_ids) | ssh key ids to grant root ssh access. does not create them. if unspecified, all currently available ssh keys will be used (within the  project containing this API token). | `list(number)` |
-| <a name="input_vpc_name"></a> [vpc\_name](#input\_vpc\_name) | name of the VPC to target, if "default" will be appended with -$region | `string` |
+| Name | Description | Default |
+|------|-------------|---------|
+| <a name="input_droplet_size"></a> [droplet\_size](#input\_droplet\_size) | which digitalocean droplet size should be used? | `"s-1vcpu-1gb-intel"` |
+| <a name="input_droplet_tags"></a> [droplet\_tags](#input\_droplet\_tags) | tags to apply to droplet. | ```[ "nixos" ]``` |
+| <a name="input_extra_volume"></a> [extra\_volume](#input\_extra\_volume) | provision a Block Volume for host? | `false` |
+| <a name="input_extra_volume_size"></a> [extra\_volume\_size](#input\_extra\_volume\_size) | how big should the extra volume be in GB? | `100` |
+| <a name="input_floating_ip"></a> [floating\_ip](#input\_floating\_ip) | reserve a floating IP droplet host? | `true` |
+| <a name="input_hostname"></a> [hostname](#input\_hostname) | what name should be given to instance? | `"nixlet"` |
+| <a name="input_image"></a> [image](#input\_image) | change this at your own risk. it "just works" like this... | `"debian-11-x64"` |
+| <a name="input_nixos_channel"></a> [nixos\_channel](#input\_nixos\_channel) | which nix channel should be used for managed hosts? | `"nixos-unstable"` |
+| <a name="input_nixos_config"></a> [nixos\_config](#input\_nixos\_config) | extra nixos config file, included in place of the default custom.nix in this module. | `""` |
+| <a name="input_region"></a> [region](#input\_region) | which digitalocean region should be used? | `"nyc3"` |
+| <a name="input_ssh_key_ids"></a> [ssh\_key\_ids](#input\_ssh\_key\_ids) | ssh key ids to grant root ssh access. does not create them. if unspecified, all currently available ssh keys will be used (within the  project containing this API token). | `[]` |
+| <a name="input_vpc_name"></a> [vpc\_name](#input\_vpc\_name) | name of the VPC to target, if "default" will be appended with -$region | `"default"` |
 
 ## Outputs
 

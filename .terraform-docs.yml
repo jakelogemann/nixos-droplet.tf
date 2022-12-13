@@ -5,14 +5,14 @@ sections: { hide: [providers, resources, data-sources] }
 settings:
   anchor: true
   color: true
-  default: false
+  default: true
   description: true
   escape: true
   hide-empty: true
-  html: true
+  html: false
   indent: 2
   lockfile: true
   read-comments: true
   required: false
   sensitive: false
-  type: true
+  type: false
