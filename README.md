@@ -7,7 +7,34 @@
 
 a [terraform] module to create a [nixos] droplet on [digitalocean].
 
-## usage
+## usage as a terraform module
+
+Start with something like this (_everything except `source` is optional_):
+
+```hcl
+module "nixlet" {
+  source        = "github.com/polis-dev/nixlet.tf"
+
+  # defaults to nixos-unstable, with flakes, and other sane defaults.
+  nixos_channel = "nixos-unstable"
+
+  # custom nixos configuration can be specified inline or via file().
+  nixos_config  = <<-NIXOS_CONFIG
+  { config, lib, pkgs, ... }: {
+    /*
+    add your configuration here...
+    */
+  }
+  NIXOS_CONFIG
+
+  # increased droplet size to make nixlet go vroooom!
+  droplet_size  = "s-4vcpu-8gb-intel"
+}
+```
+
+Then run `terraform init` and then `terraform plan`.
+
+## stand-alone / local setup
 
 1. install [terraform] and [terraform-docs]. run `./terraform.sh` to show available commands.
 
