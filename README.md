@@ -1,4 +1,4 @@
-# [NixOS] + droplet = "nixlet"
+# [NixOS] + droplet = _"nixlet"_ 🦗
 
 [terraform-docs]: https://terraform-docs.io
 [terraform]: https://terraform.io
