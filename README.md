@@ -1,4 +1,4 @@
-# nixlet.tf
+# [NixOS] + droplet = "nixlet"
 
 [terraform-docs]: https://terraform-docs.io
 [terraform]: https://terraform.io
@@ -6,7 +6,7 @@
 [nixos]: https://nixos.org
 [nix]: https://nixos.org
 
-a [terraform] module to create a [nixos] droplet on [digitalocean]. **_heavily inspired_** by [elitak/nixos-infect](https://github.com/elitak/nixos-infect) but tuned explicitly for our tools, platform, and preferences. the goal is a quick, ephemeral (or long-lasting!) nixos host on [digitalocean] without too much headache. to provide an easy on-ramp for new developers experimenting with this platform. 
+a [terraform] module to create a [nixos] droplet on [digitalocean]. **_heavily inspired_** by [elitak/nixos-infect](https://github.com/elitak/nixos-infect) but tuned explicitly for our tools, processes, and preferences. the goal is a quick to setup (ephemeral or long-lasting!) [nixos] host on [digitalocean] without too much headache and to provide an easy way for new developers to begin experimenting with this operating-system/platform. 
 
 ## use cases
 
