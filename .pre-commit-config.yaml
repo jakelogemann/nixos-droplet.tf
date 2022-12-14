@@ -37,12 +37,5 @@ repos:
         always_run: true
         language: system
         types: [terraform, asciidoc, yaml]
-      - id: terraform-tfvars
-        name: Update Terraform Examples
-        entry: ./terraform.sh tfvars
-        pass_filenames: false
-        always_run: true
-        language: system
-        types: [terraform]
 
 # See https://pre-commit.com for more information.
