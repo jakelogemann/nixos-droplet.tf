@@ -4,8 +4,15 @@
 [terraform]: https://terraform.io
 [digitalocean]: https://digitalocean.com
 [nixos]: https://nixos.org
+[nix]: https://nixos.org
 
 a [terraform] module to create a [nixos] droplet on [digitalocean].
+
+## features
+
+- no [nix] installation necessary!
+- (_assuming default options_) is deployed and ready in _"only 5-microwave minutes"_.
+- custom configuration is easy but also not required.
 
 ## usage as a terraform module
 
