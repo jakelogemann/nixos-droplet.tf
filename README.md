@@ -6,7 +6,24 @@
 [nixos]: https://nixos.org
 [nix]: https://nixos.org
 
-a [terraform] module to create a [nixos] droplet on [digitalocean].
+a [terraform] module to create a [nixos] droplet on [digitalocean]. **_heavily inspired_** by [elitak/nixos-infect](https://github.com/elitak/nixos-infect) but tuned explicitly for our tools, platform, and preferences. the goal is a quick, ephemeral (or long-lasting!) nixos host on [digitalocean] without too much headache. to provide an easy on-ramp for new developers experimenting with this platform. 
+
+## use cases
+
+- quick, ephemeral [nixos] hosts.
+  - beginners need to be safe in their sandbox to explore.
+  - developers need a scratchpad for experimentation.
+- [tailscale node(s)](https://nixos.org/manual/nixos/stable/options.html#opt-services.tailscale.enable).
+- [dnscrypt-proxy2](https://nixos.org/manual/nixos/stable/options.html#opt-services.dnscrypt-proxy2.enable) encrypted DNS server.
+- [caddy](https://nixos.org/manual/nixos/stable/options.html#opt-services.caddy.enable) web server.
+- [mastodon](https://nixos.org/manual/nixos/stable/options.html#opt-services.mastodon.enable) federated social network server.
+- [logging/tracing/event processing](https://nixos.org/manual/nixos/stable/options.html#opt-services.vector.enable).
+- [self-hosted code-server](https://nixos.org/manual/nixos/stable/options.html#opt-services.code-server.enable).
+- [grafana](https://nixos.org/manual/nixos/stable/options.html#opt-services.grafana.enable), [prometheus](https://nixos.org/manual/nixos/stable/options.html#opt-services.prometheus.enable), [victoriametrics](https://nixos.org/manual/nixos/stable/options.html#opt-services.victoriametrics.enable).
+- [factorio server](https://nixos.org/manual/nixos/stable/options.html#opt-services.factorio.enable)
+- [minio s3 filestore](https://nixos.org/manual/nixos/stable/options.html#opt-services.minio.enable)
+- [jupyterhub](https://nixos.org/manual/nixos/stable/options.html#opt-services.jupyterhub.enable) with support for **_any_** kernel you want badly enough.
+- _so many more..._ (**TODO**: clean up this rambling fever dream of possible uses)
 
 ## features
 
