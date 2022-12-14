@@ -13,6 +13,8 @@ a [terraform] module to create a [nixos] droplet on [digitalocean].
 - no [nix] installation necessary!
 - (_assuming default options_) is deployed and ready in _"only 5-microwave minutes"_.
 - custom configuration is easy but also not required.
+- extended droplet monitoring enabled!
+- needs only [terraform] and a `DIGITALOCEAN_TOKEN`!
 
 ## usage as a terraform module
 
