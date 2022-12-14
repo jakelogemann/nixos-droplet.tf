@@ -5,10 +5,19 @@
 [digitalocean]: https://digitalocean.com
 [nixos]: https://nixos.org
 [nix]: https://nixos.org
+[`DIGITALOCEAN_TOKEN`]: https://cloud.digitalocean.com/account/api/tokens/new
+[droplet monitoring]: https://docs.digitalocean.com/products/monitoring/details/features/#what-can-the-metrics-agent-access
 
 a [terraform] module to create a [nixos] droplet on [digitalocean]. **_heavily inspired_** by [elitak/nixos-infect](https://github.com/elitak/nixos-infect) but tuned explicitly for our tools, processes, and preferences. the goal is a quick to setup (ephemeral or long-lasting!) [nixos] host on [digitalocean] without too much headache and to provide an easy way for new developers to begin experimenting with this operating-system/platform. 
 
-## use cases
+## 🌟 features
+
+- 🏖️ no [nix] installation necessary! 😌 _only [terraform] and a [`DIGITALOCEAN_TOKEN`]_!
+- ⏲️ deployed and ready in _**"under 5-microwave minutes"**_ 🍗.
+- 👷‍♂️ **custom configuration** _is easy!_ 🍬 _(but also **not required**)_ 💆
+- 📡 advanced **[droplet monitoring]** enabled! 👽 🛸
+
+## 📋 use cases
 
 - quick, ephemeral [nixos] hosts.
   - beginners need to be safe in their sandbox to explore.
@@ -25,56 +34,46 @@ a [terraform] module to create a [nixos] droplet on [digitalocean]. **_heavily i
 - [jupyterhub](https://nixos.org/manual/nixos/stable/options.html#opt-services.jupyterhub.enable) with support for **_any_** kernel you want badly enough.
 - _so many more..._ (**TODO**: clean up this rambling fever dream of possible uses)
 
-## features
+## 🚀 use it as a [terraform] module
 
-- no [nix] installation necessary!
-- (_assuming default options_) is deployed and ready in _"only 5-microwave minutes"_.
-- custom configuration is easy but also not required.
-- extended droplet monitoring enabled!
-- needs only [terraform] and a `DIGITALOCEAN_TOKEN`!
-
-## usage as a terraform module
-
-Start with something like this (_everything except `source` is optional_):
+**Configuration can live next to `.tf` files, by using `file()`**:
 
 ```hcl
 module "nixlet" {
+  # note that every other value (besides source) is NOT required.
   source        = "github.com/polis-dev/nixlet.tf"
+
+  # increased droplet size to make nixlet go vroooom!
+  droplet_size  = "s-4vcpu-8gb-intel"
 
   # defaults to nixos-unstable, with flakes, and other sane defaults.
   nixos_channel = "nixos-unstable"
 
-  # custom nixos configuration can be specified inline or via file().
+  # custom nixos configuration can be specified via file() like so.
+  nixos_config  = file("${path.module}/custom.nix")
+}
+```
+
+**OR configurations can embed/inline the nix file to leverage [terraform]'s string interpolation**:
+
+```hcl
+locals { domain = "example.com" }
+module "nixlet" {
+  # note that every other value (besides source) is NOT required.
+  source        = "github.com/polis-dev/nixlet.tf"
   nixos_config  = <<-NIXOS_CONFIG
   { config, lib, pkgs, ... }: {
+    networking.domain = "${domain}";
     /*
     add your configuration here...
     */
   }
   NIXOS_CONFIG
-
-  # increased droplet size to make nixlet go vroooom!
-  droplet_size  = "s-4vcpu-8gb-intel"
 }
 ```
 
 Then run `terraform init` and then `terraform plan`.
 
-## stand-alone / local setup
-
-1. install [terraform] and [terraform-docs]. run `./terraform.sh` to show available commands.
-
-2. run `./terraform.sh init` to fetch required providers.
-
-3. export `DIGITALOCEAN_TOKEN=...` (directly, or via the example .envrc) to set your credentials.
-
-4. plan a deployment with `./terraform.sh plan`.
-
-5. apply the plan with `./terraform.sh apply`.
-
-6. ssh to your host and enjoy! allow ~5-10 minutes to provision; try not to modify anything while its still provisioning (or just `tail -f /var/log/cloud-init-output.log`).
-
-7. clean up everything with `./terraform.sh destroy`.
 
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
@@ -191,5 +190,26 @@ Description: ssh command
 
 Description: ssh username
 <!-- END_TF_DOCS -->
+
+
+## stand-alone / local setup
+
+1. install [terraform] and [terraform-docs]. 
+
+2. clone the repository and run `./terraform.sh init` to setup providers. you can run `./terraform.sh` to see available commands.
+
+3. export `DIGITALOCEAN_TOKEN=...` (directly, or via the newly created `.envrc`) to set your access credentials.
+
+4. plan a deployment with `./terraform.sh plan`.
+
+5. apply the plan with `./terraform.sh apply`. allow ~5 minutes (with default config) to provision completely (or just `tail -f /var/log/cloud-init-output.log`).
+
+6. ssh to your host and enjoy! clean up everything with `./terraform.sh destroy`.
+
+## troubleshooting
+
+### i logged into my host and its not nixos! its debian!
+
+you can read through the log output from cloud-init with `less /var/log/cloud-init-output.log`. often a small syntax error or a minor typo can cause the initial build to fail. you will almost certainly want to start the provisioning process over entirely after making your correction locally; luckily with [terraform] thats pretty easy: `./terraform.sh apply -destroy`, then `./terraform.sh apply` to create it again.
 
 _NOTE that the documentation is automatically updated by [terraform-docs]._
