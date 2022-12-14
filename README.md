@@ -208,8 +208,8 @@ Description: ssh username
 
 ## troubleshooting
 
-### i logged into my host and its not nixos! its debian!
+**_"i logged into my host and its not nixos! its debian!"_**:
 
-you can read through the log output from cloud-init with `less /var/log/cloud-init-output.log`. often a small syntax error or a minor typo can cause the initial build to fail. you will almost certainly want to start the provisioning process over entirely after making your correction locally; luckily with [terraform] thats pretty easy: `./terraform.sh apply -destroy`, then `./terraform.sh apply` to create it again.
+well, "_future self at 3am_", you can read through the log output from cloud-init with `less /var/log/cloud-init-output.log`. often a small syntax error or a minor typo can cause the initial build to fail. you will almost certainly want to start the provisioning process over entirely after making your correction locally; luckily with [terraform] thats pretty easy: `./terraform.sh apply -destroy`, then `./terraform.sh apply` to create it again.
 
 _NOTE that the documentation is automatically updated by [terraform-docs]._
