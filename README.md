@@ -86,19 +86,23 @@ The following requirements are needed by this module:
 
 - <a name="requirement_digitalocean"></a> [digitalocean](#requirement\_digitalocean) (~> 2.0)
 
-## Inputs
+## Optional Inputs
 
-The following input variables are supported:
+The following input variables are optional (have default values):
 
 ### <a name="input_droplet_size"></a> [droplet\_size](#input\_droplet\_size)
 
 Description: which digitalocean droplet size should be used?
+
+Type: `string`
 
 Default: `"s-1vcpu-1gb-intel"`
 
 ### <a name="input_droplet_tags"></a> [droplet\_tags](#input\_droplet\_tags)
 
 Description: tags to apply to droplet.
+
+Type: `list(string)`
 
 Default:
 
@@ -112,11 +116,15 @@ Default:
 
 Description: provision a Block Volume for host?
 
+Type: `bool`
+
 Default: `false`
 
 ### <a name="input_extra_volume_size"></a> [extra\_volume\_size](#input\_extra\_volume\_size)
 
 Description: how big should the extra volume be in GB?
+
+Type: `number`
 
 Default: `100`
 
@@ -124,11 +132,15 @@ Default: `100`
 
 Description: file contents of flake.nix (if empty, default will be generated)
 
+Type: `string`
+
 Default: `""`
 
 ### <a name="input_floating_ip"></a> [floating\_ip](#input\_floating\_ip)
 
 Description: reserve a floating IP droplet host?
+
+Type: `bool`
 
 Default: `true`
 
@@ -136,11 +148,15 @@ Default: `true`
 
 Description: what name should be given to instance?
 
+Type: `string`
+
 Default: `"nixlet"`
 
 ### <a name="input_image"></a> [image](#input\_image)
 
 Description: change this at your own risk. it "just works" like this...
+
+Type: `string`
 
 Default: `"debian-11-x64"`
 
@@ -148,11 +164,15 @@ Default: `"debian-11-x64"`
 
 Description: file contents of infect.sh (if empty, default will be used)
 
+Type: `string`
+
 Default: `""`
 
 ### <a name="input_nixos_channel"></a> [nixos\_channel](#input\_nixos\_channel)
 
 Description: which nix channel should be used for managed hosts?
+
+Type: `string`
 
 Default: `"nixos-unstable"`
 
@@ -160,11 +180,15 @@ Default: `"nixos-unstable"`
 
 Description: file contents of custom.nix (if empty, default will be used)
 
+Type: `string`
+
 Default: `""`
 
 ### <a name="input_nixos_system"></a> [nixos\_system](#input\_nixos\_system)
 
 Description: n/a
+
+Type: `string`
 
 Default: `"x86_64-linux"`
 
@@ -172,17 +196,23 @@ Default: `"x86_64-linux"`
 
 Description: which digitalocean region should be used?
 
+Type: `string`
+
 Default: `"nyc3"`
 
 ### <a name="input_ssh_key_ids"></a> [ssh\_key\_ids](#input\_ssh\_key\_ids)
 
 Description: ssh key ids to grant root ssh access. does not create them. if unspecified, all currently available ssh keys will be used (within the  project containing this API token).
 
+Type: `list(number)`
+
 Default: `[]`
 
 ### <a name="input_vpc_name"></a> [vpc\_name](#input\_vpc\_name)
 
 Description: name of the VPC to target, if "default" will be appended with -$region
+
+Type: `string`
 
 Default: `"default"`
 
