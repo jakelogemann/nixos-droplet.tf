@@ -37,7 +37,24 @@ variable "floating_ip" {
 variable "nixos_config" {
   default     = ""
   type        = string
-  description = "extra nixos config file, included in place of the default custom.nix in this module."
+  description = "file contents of custom.nix (if empty, default will be used)"
+}
+
+variable "flake_config" {
+  default     = ""
+  type        = string
+  description = "file contents of flake.nix (if empty, default will be generated)"
+}
+
+variable "infect_script" {
+  default     = ""
+  type        = string
+  description = "file contents of infect.sh (if empty, default will be used)"
+}
+
+variable "nixos_system" {
+  default = "x86_64-linux"
+  type    = string
 }
 
 variable "nixos_channel" {
@@ -105,11 +122,34 @@ data "cloudinit_config" "user_data" {
       write_files = [{
         path        = "/root/infect.sh"
         permissions = "0600"
-        content     = file("${path.module}/infect.sh")
+        content     = var.infect_script != "" ? var.infect_script : file("${path.module}/infect.sh")
+        }, {
+        path        = "/etc/nixos/flake.nix"
+        permissions = "0644"
+        content     = var.flake_config != "" ? var.flake_config : <<-DEFAULT_FLAKE
+        {
+          description = "${var.hostname}";
+
+          inputs = {
+            nixpkgs.url = "nixpkgs/${var.nixos_channel}";
+          };
+
+          outputs = {
+            self,
+            nixpkgs,
+          }@inputs': {
+            nixosConfigurations."${var.hostname}" = nixpkgs.lib.nixosSystem rec {
+              system = "${var.nixos_system}";
+              specialArgs = inputs' // { inherit system; };
+              modules = [(import ./configuration.nix)];
+            };
+          };
+        }
+        DEFAULT_FLAKE
         }, {
         path        = "/etc/nixos/custom.nix"
         permissions = "0644"
-        content     = var.nixos_config == "" ? file("${path.module}/custom.nix") : var.nixos_config
+        content     = var.nixos_config != "" ? var.nixos_config : file("${path.module}/custom.nix")
         }, {
         # System-wide nix configuration
         path        = "/etc/nix/nix.conf"

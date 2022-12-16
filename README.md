@@ -8,7 +8,7 @@
 [`DIGITALOCEAN_TOKEN`]: https://cloud.digitalocean.com/account/api/tokens/new
 [droplet monitoring]: https://docs.digitalocean.com/products/monitoring/details/features/#what-can-the-metrics-agent-access
 
-a [terraform] module to create a [nixos] droplet on [digitalocean]. **_heavily inspired_** by [elitak/nixos-infect](https://github.com/elitak/nixos-infect) but tuned explicitly for our tools, processes, and preferences. the goal is a quick to setup (ephemeral or long-lasting!) [nixos] host on [digitalocean] without too much headache and to provide an easy way for new developers to begin experimenting with this operating-system/platform. 
+a [terraform] module to create a [nixos] droplet on [digitalocean]. **_heavily inspired_** by [elitak/nixos-infect](https://github.com/elitak/nixos-infect) but tuned explicitly for our tools, processes, and preferences. the goal is a quick to setup (ephemeral or long-lasting!) [nixos] host on [digitalocean] without too much headache and to provide an easy way for new developers to begin experimenting with this operating-system/platform.
 
 ## 🌟 features
 
@@ -23,7 +23,7 @@ a [terraform] module to create a [nixos] droplet on [digitalocean]. **_heavily i
 - 🎓 a safe and productive learning environment for beginners to explore.
 - 📝 developer's scratchpad.
 - 🔬 "clean room" for further analysis.
-- 🦠 other miscellaneous experimentation. 
+- 🦠 other miscellaneous experimentation.
   - [tailscale node(s)](https://nixos.org/manual/nixos/stable/options.html#opt-services.tailscale.enable).
   - [dnscrypt-proxy2](https://nixos.org/manual/nixos/stable/options.html#opt-services.dnscrypt-proxy2.enable) encrypted DNS server.
   - [caddy](https://nixos.org/manual/nixos/stable/options.html#opt-services.caddy.enable) web server.
@@ -120,6 +120,12 @@ Description: how big should the extra volume be in GB?
 
 Default: `100`
 
+### <a name="input_flake_config"></a> [flake\_config](#input\_flake\_config)
+
+Description: file contents of flake.nix (if empty, default will be generated)
+
+Default: `""`
+
 ### <a name="input_floating_ip"></a> [floating\_ip](#input\_floating\_ip)
 
 Description: reserve a floating IP droplet host?
@@ -138,6 +144,12 @@ Description: change this at your own risk. it "just works" like this...
 
 Default: `"debian-11-x64"`
 
+### <a name="input_infect_script"></a> [infect\_script](#input\_infect\_script)
+
+Description: file contents of infect.sh (if empty, default will be used)
+
+Default: `""`
+
 ### <a name="input_nixos_channel"></a> [nixos\_channel](#input\_nixos\_channel)
 
 Description: which nix channel should be used for managed hosts?
@@ -146,9 +158,15 @@ Default: `"nixos-unstable"`
 
 ### <a name="input_nixos_config"></a> [nixos\_config](#input\_nixos\_config)
 
-Description: extra nixos config file, included in place of the default custom.nix in this module.
+Description: file contents of custom.nix (if empty, default will be used)
 
 Default: `""`
+
+### <a name="input_nixos_system"></a> [nixos\_system](#input\_nixos\_system)
+
+Description: n/a
+
+Default: `"x86_64-linux"`
 
 ### <a name="input_region"></a> [region](#input\_region)
 
@@ -196,7 +214,7 @@ Description: ssh username
 
 ## stand-alone / local setup
 
-1. install [terraform] and [terraform-docs]. 
+1. install [terraform] and [terraform-docs].
 
 2. clone the repository and run `./terraform.sh init` to setup providers. you can run `./terraform.sh` to see available commands.
 
