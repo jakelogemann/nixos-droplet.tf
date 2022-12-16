@@ -1,12 +1,10 @@
 # Ignore everything by default.
 *
 # Allow only what we explicitly want to add.
-!.envrc.example
 !.gitignore
 !.pre-commit-config.yaml
 !LICENSE
 !README.md
-!custom.nix
 !infect.sh
 !terraform.sh
 !terraform.tf
