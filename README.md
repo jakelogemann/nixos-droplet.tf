@@ -90,6 +90,14 @@ The following requirements are needed by this module:
 
 The following input variables are optional (have default values):
 
+### <a name="input_backups"></a> [backups](#input\_backups)
+
+Description: enable regular digitalocean droplet backups
+
+Type: `bool`
+
+Default: `false`
+
 ### <a name="input_droplet_size"></a> [droplet\_size](#input\_droplet\_size)
 
 Description: which digitalocean droplet size should be used?
@@ -104,29 +112,7 @@ Description: tags to apply to droplet.
 
 Type: `list(string)`
 
-Default:
-
-```json
-[
-  "nixos"
-]
-```
-
-### <a name="input_extra_volume"></a> [extra\_volume](#input\_extra\_volume)
-
-Description: provision a Block Volume for host?
-
-Type: `bool`
-
-Default: `false`
-
-### <a name="input_extra_volume_size"></a> [extra\_volume\_size](#input\_extra\_volume\_size)
-
-Description: how big should the extra volume be in GB?
-
-Type: `number`
-
-Default: `100`
+Default: `[]`
 
 ### <a name="input_flake_config"></a> [flake\_config](#input\_flake\_config)
 
@@ -143,6 +129,14 @@ Description: reserve a floating IP droplet host?
 Type: `bool`
 
 Default: `true`
+
+### <a name="input_graceful_shutdown"></a> [graceful\_shutdown](#input\_graceful\_shutdown)
+
+Description: allow this droplet to shutdown gracefully?
+
+Type: `bool`
+
+Default: `false`
 
 ### <a name="input_hostname"></a> [hostname](#input\_hostname)
 
@@ -167,6 +161,14 @@ Description: file contents of infect.sh (if empty, default will be used)
 Type: `string`
 
 Default: `""`
+
+### <a name="input_ipv6"></a> [ipv6](#input\_ipv6)
+
+Description: enable ipv6?
+
+Type: `bool`
+
+Default: `true`
 
 ### <a name="input_nixos_channel"></a> [nixos\_channel](#input\_nixos\_channel)
 
@@ -200,9 +202,25 @@ Type: `string`
 
 Default: `"nyc3"`
 
+### <a name="input_resize_disk"></a> [resize\_disk](#input\_resize\_disk)
+
+Description: resize disk when resizing the droplet (permanent change)
+
+Type: `bool`
+
+Default: `false`
+
 ### <a name="input_ssh_key_ids"></a> [ssh\_key\_ids](#input\_ssh\_key\_ids)
 
 Description: ssh key ids to grant root ssh access. does not create them. if unspecified, all currently available ssh keys will be used (within the  project containing this API token).
+
+Type: `list(number)`
+
+Default: `[]`
+
+### <a name="input_volume_ids"></a> [volume\_ids](#input\_volume\_ids)
+
+Description: list of volumes to be mounted to the created droplet.
 
 Type: `list(number)`
 
@@ -220,6 +238,14 @@ Default: `"default"`
 
 The following outputs are exported:
 
+### <a name="output_droplet"></a> [droplet](#output\_droplet)
+
+Description: (augmented) droplet resource
+
+### <a name="output_floating_ip"></a> [floating\_ip](#output\_floating\_ip)
+
+Description: (augmented) floating\_ip resource
+
 ### <a name="output_ipv4_address"></a> [ipv4\_address](#output\_ipv4\_address)
 
 Description: public ipv4 address
@@ -227,18 +253,6 @@ Description: public ipv4 address
 ### <a name="output_ipv6_address"></a> [ipv6\_address](#output\_ipv6\_address)
 
 Description: public ipv6 address
-
-### <a name="output_remote_log_file"></a> [remote\_log\_file](#output\_remote\_log\_file)
-
-Description: logs from cloud-init will be in this path on the remote host. you can use something like `ssh root@<IP> tail -f <PATH>` to follow installation as it goes.
-
-### <a name="output_ssh_command"></a> [ssh\_command](#output\_ssh\_command)
-
-Description: ssh command
-
-### <a name="output_ssh_username"></a> [ssh\_username](#output\_ssh\_username)
-
-Description: ssh username
 <!-- END_TF_DOCS -->
 
 

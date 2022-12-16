@@ -16,6 +16,12 @@ variable "ssh_key_ids" {
   description = "ssh key ids to grant root ssh access. does not create them. if unspecified, all currently available ssh keys will be used (within the  project containing this API token)."
 }
 
+variable "volume_ids" {
+  default     = []
+  type        = list(number)
+  description = "list of volumes to be mounted to the created droplet."
+}
+
 variable "region" {
   default     = "nyc3"
   type        = string
@@ -32,6 +38,12 @@ variable "floating_ip" {
   default     = true
   type        = bool
   description = "reserve a floating IP droplet host?"
+}
+
+variable "ipv6" {
+  default     = true
+  type        = bool
+  description = "enable ipv6?"
 }
 
 variable "nixos_config" {
@@ -63,16 +75,22 @@ variable "nixos_channel" {
   description = "which nix channel should be used for managed hosts?"
 }
 
-variable "extra_volume" {
+variable "graceful_shutdown" {
   default     = false
   type        = bool
-  description = "provision a Block Volume for host?"
+  description = "allow this droplet to shutdown gracefully?"
 }
 
-variable "extra_volume_size" {
-  default     = 100
-  type        = number
-  description = "how big should the extra volume be in GB?"
+variable "backups" {
+  default     = false
+  type        = bool
+  description = "enable regular digitalocean droplet backups"
+}
+
+variable "resize_disk" {
+  default     = false
+  type        = bool
+  description = "resize disk when resizing the droplet (permanent change)"
 }
 
 variable "image" {
@@ -82,7 +100,7 @@ variable "image" {
 }
 
 variable "droplet_tags" {
-  default     = ["nixos"]
+  default     = []
   description = "tags to apply to droplet."
   type        = list(string)
 }
@@ -379,35 +397,25 @@ data "digitalocean_vpc" "main" {
 }
 
 resource "digitalocean_droplet" "main" {
+  backups           = var.backups
+  droplet_agent     = false
+  graceful_shutdown = var.graceful_shutdown
   image             = var.image
+  ipv6              = var.ipv6
+  monitoring        = false
   name              = var.hostname
   region            = var.region
-  vpc_uuid          = data.digitalocean_vpc.main.id
+  resize_disk       = var.resize_disk
   size              = var.droplet_size
-  ipv6              = true
-  monitoring        = false
-  backups           = false
-  droplet_agent     = false
-  graceful_shutdown = false
-  resize_disk       = !var.extra_volume
+  ssh_keys          = length(var.ssh_key_ids) != 0 ? var.ssh_key_ids : data.digitalocean_ssh_keys.all.ssh_keys.*.id
+  tags              = length(var.droplet_tags) != 0 ? var.droplet_tags : ["nixos"]
   user_data         = data.cloudinit_config.user_data.rendered
-  volume_ids        = var.extra_volume ? [digitalocean_volume.extra[1].id] : []
-  ssh_keys          = length(var.ssh_key_ids) == 0 ? data.digitalocean_ssh_keys.all.ssh_keys.*.id : var.ssh_key_ids
-  tags              = var.droplet_tags
+  volume_ids        = var.volume_ids
+  vpc_uuid          = data.digitalocean_vpc.main.id
   lifecycle {
     ignore_changes = [ssh_keys]
   }
 }
-
-resource "digitalocean_volume" "extra" {
-  count                   = var.extra_volume ? 1 : 0
-  region                  = var.region
-  name                    = "extra-${var.hostname}"
-  description             = format("Extra volume for %s.", var.hostname)
-  size                    = var.extra_volume_size
-  initial_filesystem_type = "ext4"
-}
-
 
 resource "digitalocean_floating_ip" "main" {
   count      = var.floating_ip ? 1 : 0
@@ -417,7 +425,6 @@ resource "digitalocean_floating_ip" "main" {
 
 locals {
   ssh_username = "root"
-  ssh_options  = "-oUserKnownHostsFile=/dev/null -oStrictHostKeyChecking=accept-new"
   ipv4_address = var.floating_ip ? digitalocean_floating_ip.main[0].ip_address : digitalocean_droplet.main.ipv4_address
 }
 
@@ -431,19 +438,18 @@ output "ipv6_address" {
   description = "public ipv6 address"
 }
 
-output "ssh_username" {
-  value       = "root"
-  description = "ssh username"
+output "floating_ip" {
+  description = "(augmented) floating_ip resource"
+  value = !var.floating_ip ? {} : merge(digitalocean_floating_ip.main[0], {
+  })
 }
 
-output "ssh_command" {
-  value       = format("ssh %s %s@%s", local.ssh_options, local.ssh_username, local.ipv4_address)
-  description = "ssh command"
-}
-
-output "remote_log_file" {
-  value       = "/var/log/cloud-init-output.log"
-  description = "logs from cloud-init will be in this path on the remote host. you can use something like `ssh root@<IP> tail -f <PATH>` to follow installation as it goes."
+output "droplet" {
+  description = "(augmented) droplet resource"
+  value = merge(digitalocean_droplet.main, {
+    ssh_command  = format("ssh %s@%s", local.ssh_username, local.ipv4_address)
+    ssh_username = "root"
+  })
 }
 
 terraform {
