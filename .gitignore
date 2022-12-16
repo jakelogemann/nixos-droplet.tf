@@ -1,12 +1,12 @@
-.direnv/*
-.envrc*
-.terraform*
-.terraform/*
-*.tfstate
-*.tfstate.backup
-*.tfvars
-*.tfvars.json
-
-# Exceptions
+# Ignore everything by default.
+*
+# Allow only what we explicitly want to add.
 !.envrc.example
-!.terraform-docs.yml
+!.gitignore
+!.pre-commit-config.yaml
+!LICENSE
+!README.md
+!custom.nix
+!infect.sh
+!terraform.sh
+!terraform.tf
