@@ -18,11 +18,7 @@ metadata="$(mktemp)" && readonly metadata
 curl http://169.254.169.254/metadata/v1.json >"$metadata"
 query_metadata(){ jq -Se "$@" "$metadata"; }
 
-export SYSTEM_CONFIG="${SYSTEM_CONFIG:-/etc/nixos/configuration.nix}"
-# If the output file already exists, make a backup.
-test ! -r "$SYSTEM_CONFIG" || mv "$SYSTEM_CONFIG" "$SYSTEM_CONFIG.old"
-# We're finally ready to generate the configuration.
-cat <<-__GENERATED_SYSTEM_CONFIG__ | tee "$SYSTEM_CONFIG"
+info 'generate a nixos configuration.' && cat <<-__GENERATED_SYSTEM_CONFIG__ | tee /etc/nixos/configuration.nix
 { config, lib, pkgs, modulesPath, ... }:
 {
   imports = [
@@ -75,8 +71,7 @@ cat <<-__GENERATED_SYSTEM_CONFIG__ | tee "$SYSTEM_CONFIG"
 }
 __GENERATED_SYSTEM_CONFIG__
 
-info 'everything except the files listed below will be purged from the system on reboot:'
-cat <<-__PROTECTED_FILES__ | tee /etc/NIXOS_LUSTRATE && touch /etc/NIXOS
+info 'everything except the files listed below will be purged from the system on reboot:' && cat <<-__PROTECTED_FILES__ | tee /etc/NIXOS_LUSTRATE
 etc/nixos
 etc/resolv.conf
 var/log/cloud-init-output.log
@@ -84,12 +79,11 @@ root/.nix-defexpr/channels
 $(cd / && ls etc/ssh/ssh_host_*_key* || true)
 __PROTECTED_FILES__
 
-
+info 'ensure /etc/NIXOS exists, as required by nixos" && touch /etc/NIXOS
 info 'install nix if its not already installed.' && test -r ~/.nix-profile/etc/profile.d/nix.sh || curl -L 'https://nixos.org/nix/install' | sh
 info 'load our nix profile into the current environment.' && source ~/.nix-profile/etc/profile.d/nix.sh
-
 info 'use specified nix-channel' && nix-channel --remove nixpkgs && nix-channel --add "https://nixos.org/channels/${NIX_CHANNEL:-nixos-unstable}" nixos
-nix-channel --update && info 'update our nix-channel cache.'
+info 'update our nix-channel cache.' && nix-channel --update 
 
 info 'build our (future) nixos "system" profile from the "default" nix profile for the root user.'
 if test -r '/etc/nixos/flake.nix'; then
