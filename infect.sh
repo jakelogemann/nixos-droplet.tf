@@ -79,7 +79,7 @@ root/.nix-defexpr/channels
 $(cd / && ls etc/ssh/ssh_host_*_key* || true)
 __PROTECTED_FILES__
 
-info 'ensure /etc/NIXOS exists, as required by nixos" && touch /etc/NIXOS
+info 'ensure /etc/NIXOS exists, as required by nixos' && touch /etc/NIXOS
 info 'install nix if its not already installed.' && test -r ~/.nix-profile/etc/profile.d/nix.sh || curl -L 'https://nixos.org/nix/install' | sh
 info 'load our nix profile into the current environment.' && source ~/.nix-profile/etc/profile.d/nix.sh
 info 'use specified nix-channel' && nix-channel --remove nixpkgs && nix-channel --add "https://nixos.org/channels/${NIX_CHANNEL:-nixos-unstable}" nixos
