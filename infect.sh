@@ -1,17 +1,28 @@
 #!/usr/bin/env bash
 set -euo pipefail && IFS=$'\n'
-export NIXOS_CONFIG="${NIXOS_CONFIG:-/etc/nixos/configuration.nix}"
 
-# If the output file already exists, make a backup.
-test ! -r "$NIXOS_CONFIG" || mv "$NIXOS_CONFIG" "$NIXOS_CONFIG.old"
+# helper functions.
+fatal(){  error "$@" && exit 1; }
+error(){  echo -e "\n[ERROR]:    $@\n" >&2; }
+warn(){   echo -e "\n[WARNING]:  $@\n" >&2; }
+info(){   echo -e "\n[INFO]:     $@\n" >&2; }
+require_bin(){  type -p "$1" >/dev/null 2>&1 || (fatal "missing $1"); }
+require_bins(){ for a in "$@"; do require_bin "$a"; done; }
+require_root(){ [[ $EUID -eq 0 ]] || fatal "must be run as root user (try sudo)"; }
+
+# perform final "pre-flight checks"...
+require_root && require_bins curl jq df
 
 # cache the metadata file for use below.
 metadata="$(mktemp)" && readonly metadata
 curl http://169.254.169.254/metadata/v1.json >"$metadata"
 query_metadata(){ jq -Se "$@" "$metadata"; }
 
+export SYSTEM_CONFIG="${SYSTEM_CONFIG:-/etc/nixos/configuration.nix}"
+# If the output file already exists, make a backup.
+test ! -r "$SYSTEM_CONFIG" || mv "$SYSTEM_CONFIG" "$SYSTEM_CONFIG.old"
 # We're finally ready to generate the configuration.
-cat <<-__GENERATED_NIXOS_CONFIG__ | tee "$NIXOS_CONFIG"
+cat <<-__GENERATED_SYSTEM_CONFIG__ | tee "$SYSTEM_CONFIG"
 { config, lib, pkgs, modulesPath, ... }:
 {
   imports = [
@@ -62,46 +73,50 @@ cat <<-__GENERATED_NIXOS_CONFIG__ | tee "$NIXOS_CONFIG"
     ATTR{address}==$(query_metadata '.interfaces.private[0].mac'), NAME="eth1"
   '';
 }
-__GENERATED_NIXOS_CONFIG__
+__GENERATED_SYSTEM_CONFIG__
 
-# Install Nix if its not already installed.
-test -r ~/.nix-profile/etc/profile.d/nix.sh || curl -L https://nixos.org/nix/install | sh
-source ~/.nix-profile/etc/profile.d/nix.sh
-
-# Set the Nix channel and update it.
-nix-channel --remove nixpkgs
-nix-channel --add "https://nixos.org/channels/${NIX_CHANNEL:-nixos-unstable}" nixos
-nix-channel --update
-
-# Build our (future) NixOS system.
-nix-env --set \
-  -I nixpkgs=$HOME/.nix-defexpr/channels/nixos \
-  -f '<nixpkgs/nixos>' \
-  -p /nix/var/nix/profiles/system \
-  -A system
-
-# Remove nix installed with curl | bash
-rm -fv /nix/var/nix/profiles/default*
-/nix/var/nix/profiles/system/sw/bin/nix-collect-garbage
-
-# Reify resolv.conf
-[[ -L /etc/resolv.conf ]] && mv -v /etc/resolv.conf /etc/resolv.conf.lnk && cat /etc/resolv.conf.lnk > /etc/resolv.conf
-
-# Stage the Nix coup d'état
-touch /etc/NIXOS && cat <<-__PROTECTED_FILES__ >/etc/NIXOS_LUSTRATE
+info 'everything except the files listed below will be purged from the system on reboot:'
+cat <<-__PROTECTED_FILES__ | tee /etc/NIXOS_LUSTRATE && touch /etc/NIXOS
 etc/nixos
 etc/resolv.conf
+var/log/cloud-init-output.log
 root/.nix-defexpr/channels
 $(cd / && ls etc/ssh/ssh_host_*_key* || true)
 __PROTECTED_FILES__
 
-if test -d /boot; then
-  mv -v /boot /boot.bak || { cp -a /boot /book.bak ; rm -rf /boot/* ; umount /boot ; }
+
+info 'install nix if its not already installed.' && test -r ~/.nix-profile/etc/profile.d/nix.sh || curl -L 'https://nixos.org/nix/install' | sh
+info 'load our nix profile into the current environment.' && source ~/.nix-profile/etc/profile.d/nix.sh
+
+info 'use specified nix-channel' && nix-channel --remove nixpkgs && nix-channel --add "https://nixos.org/channels/${NIX_CHANNEL:-nixos-unstable}" nixos
+nix-channel --update && info 'update our nix-channel cache.'
+
+info 'build our (future) nixos "system" profile from the "default" nix profile for the root user.'
+if test -r '/etc/nixos/flake.nix'; then
+    nix build --no-link --profile '/nix/var/nix/profiles/system' \
+        "/etc/nixos#nixosConfigurations.$(hostname -s).config.system.build.toplevel"
+else
+    nix-env --set -f '<nixpkgs/nixos>' -A system \
+        -I nixos-config='/etc/nixos/configuration.nix' \
+        -I nixpkgs="$HOME/.nix-defexpr/channels/nixos" \
+        -p '/nix/var/nix/profiles/system'
 fi
 
-readonly activation_script=/nix/var/nix/profiles/system/bin/switch-to-configuration
-test ! -x "$activation_script" || $activation_script boot
+# Stage the Nix coup d'état
+# Unless otherwise specified, its time to start preparing/activating the NixOS "system" profile.
+if [[ -z "${NO_ACTIVATE:-}" ]]; then
+    info 'Cleanup "default" nix installation for the root user.'
+    rm -fv /nix/var/nix/profiles/default* && /nix/var/nix/profiles/system/sw/bin/nix-collect-garbage
 
-if [[ -z "${NO_REBOOT:-}" ]]; then
-  reboot
+    info 'reify resolv.conf'
+    [[ -L /etc/resolv.conf ]] && mv -v /etc/resolv.conf /etc/resolv.conf.lnk && cat /etc/resolv.conf.lnk > /etc/resolv.conf
+
+    info 'create a safe copy of the boot directory' && if test -d /boot; then
+      # We make a copy of the boot directory, if it exists, in case we hope to recover later.
+      # Honestly, this might not be that useful...
+      mv -v /boot /boot.bak || { cp -a /boot /book.bak ; rm -rf /boot/* ; umount /boot ; }
+    fi
+
+    info 'switch to our configuration on next boot.' && /nix/var/nix/profiles/system/bin/switch-to-configuration boot
+    info 'unless otherwise specified its time to reboot and cross our fingers!' && if [[ -z "${NO_REBOOT:-}" ]]; then reboot; fi
 fi
