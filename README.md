@@ -23,18 +23,19 @@ a [terraform] module to create a [nixos] droplet on [digitalocean]. **_heavily i
 - 🎓 a safe and productive learning environment for beginners to explore.
 - 📝 developer's scratchpad.
 - 🔬 "clean room" for further analysis.
-- 🦠 other miscellaneous experimentation.
+- 🦠 ephemeral services
   - [tailscale node(s)](https://nixos.org/manual/nixos/stable/options.html#opt-services.tailscale.enable).
   - [dnscrypt-proxy2](https://nixos.org/manual/nixos/stable/options.html#opt-services.dnscrypt-proxy2.enable) encrypted DNS server.
   - [caddy](https://nixos.org/manual/nixos/stable/options.html#opt-services.caddy.enable) web server.
   - [mastodon](https://nixos.org/manual/nixos/stable/options.html#opt-services.mastodon.enable) federated social network server.
   - [logging/tracing/event processing](https://nixos.org/manual/nixos/stable/options.html#opt-services.vector.enable).
-  - [self-hosted code-server](https://nixos.org/manual/nixos/stable/options.html#opt-services.code-server.enable).
+  - [code-server](https://nixos.org/manual/nixos/stable/options.html#opt-services.code-server.enable).
+  - [github-runner](https://nixos.org/manual/nixos/stable/options.html#opt-services.github-runner.enable)/[gitlab-runner](https://nixos.org/manual/nixos/stable/options.html#opt-services.gitlab-runner.enable)
   - [grafana](https://nixos.org/manual/nixos/stable/options.html#opt-services.grafana.enable), [prometheus](https://nixos.org/manual/nixos/stable/options.html#opt-services.prometheus.enable), [victoriametrics](https://nixos.org/manual/nixos/stable/options.html#opt-services.victoriametrics.enable).
   - [factorio server](https://nixos.org/manual/nixos/stable/options.html#opt-services.factorio.enable)
   - [minio s3 filestore](https://nixos.org/manual/nixos/stable/options.html#opt-services.minio.enable)
   - [jupyterhub](https://nixos.org/manual/nixos/stable/options.html#opt-services.jupyterhub.enable) with support for **_any_** kernel you want badly enough.
-  - _so many more..._ (**TODO**: clean up this rambling fever dream of possible uses)
+  - [_so many more..._](https://search.nixos.org/options?channel=unstable&from=0&size=50&sort=alpha_asc&type=packages&query=services.*.enable)
 
 ## 🚀 module
 
