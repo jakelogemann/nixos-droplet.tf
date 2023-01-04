@@ -66,7 +66,7 @@ module "nixlet" {
   source        = "github.com/polis-dev/nixlet.tf"
   nixos_config  = <<-NIXOS_CONFIG
   { config, lib, pkgs, ... }: {
-    networking.domain = "${domain}";
+    networking.domain = "${local.domain}";
     /*
     add your configuration here...
     */
