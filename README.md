@@ -1,12 +1,5 @@
 # [NixOS] + droplet = _"nixlet"_ 🦗
 
-[terraform-docs]: https://terraform-docs.io
-[terraform]: https://terraform.io
-[digitalocean]: https://digitalocean.com
-[nixos]: https://nixos.org
-[nix]: https://nixos.org
-[`DIGITALOCEAN_TOKEN`]: https://cloud.digitalocean.com/account/api/tokens/new
-[droplet monitoring]: https://docs.digitalocean.com/products/monitoring/details/features/#what-can-the-metrics-agent-access
 
 a [terraform] module to create a [nixos] droplet on [digitalocean]. **_heavily inspired_** by [elitak/nixos-infect](https://github.com/elitak/nixos-infect) but tuned explicitly for our tools, processes, and preferences. the goal is a quick to setup (ephemeral or long-lasting!) [nixos] host on [digitalocean] without too much headache and to provide an easy way for new developers to begin experimenting with this operating-system/platform.
 
@@ -81,179 +74,59 @@ Then run `terraform init` and then `terraform plan`.
 <!-- BEGIN_TF_DOCS -->
 ## Requirements
 
-The following requirements are needed by this module:
-
-- <a name="requirement_cloudinit"></a> [cloudinit](#requirement\_cloudinit) (~> 2.2)
-
-- <a name="requirement_digitalocean"></a> [digitalocean](#requirement\_digitalocean) (~> 2.0)
-
-## Optional Inputs
-
-The following input variables are optional (have default values):
-
-### <a name="input_backups"></a> [backups](#input\_backups)
-
-Description: enable regular digitalocean droplet backups
-
-Type: `bool`
-
-Default: `false`
-
-### <a name="input_droplet_size"></a> [droplet\_size](#input\_droplet\_size)
-
-Description: which digitalocean droplet size should be used?
-
-Type: `string`
-
-Default: `"s-1vcpu-1gb-intel"`
-
-### <a name="input_droplet_tags"></a> [droplet\_tags](#input\_droplet\_tags)
-
-Description: tags to apply to droplet.
-
-Type: `list(string)`
-
-Default: `[]`
-
-### <a name="input_flake_config"></a> [flake\_config](#input\_flake\_config)
-
-Description: file contents of flake.nix (if empty, default will be generated)
-
-Type: `string`
-
-Default: `""`
-
-### <a name="input_floating_ip"></a> [floating\_ip](#input\_floating\_ip)
-
-Description: reserve a floating IP droplet host?
-
-Type: `bool`
-
-Default: `true`
-
-### <a name="input_graceful_shutdown"></a> [graceful\_shutdown](#input\_graceful\_shutdown)
-
-Description: allow this droplet to shutdown gracefully?
-
-Type: `bool`
-
-Default: `false`
-
-### <a name="input_hostname"></a> [hostname](#input\_hostname)
-
-Description: what name should be given to instance?
-
-Type: `string`
-
-Default: `"nixlet"`
-
-### <a name="input_image"></a> [image](#input\_image)
-
-Description: change this at your own risk. it "just works" like this...
-
-Type: `string`
-
-Default: `"debian-11-x64"`
-
-### <a name="input_infect_script"></a> [infect\_script](#input\_infect\_script)
-
-Description: file contents of infect.sh (if empty, default will be used)
-
-Type: `string`
-
-Default: `""`
-
-### <a name="input_ipv6"></a> [ipv6](#input\_ipv6)
-
-Description: enable ipv6?
-
-Type: `bool`
-
-Default: `true`
-
-### <a name="input_nixos_channel"></a> [nixos\_channel](#input\_nixos\_channel)
-
-Description: which nix channel should be used for managed hosts?
-
-Type: `string`
-
-Default: `"nixos-unstable"`
-
-### <a name="input_nixos_config"></a> [nixos\_config](#input\_nixos\_config)
-
-Description: file contents of custom.nix (if empty, default will be used)
-
-Type: `string`
-
-Default: `""`
-
-### <a name="input_nixos_system"></a> [nixos\_system](#input\_nixos\_system)
-
-Description: n/a
-
-Type: `string`
-
-Default: `"x86_64-linux"`
-
-### <a name="input_region"></a> [region](#input\_region)
-
-Description: which digitalocean region should be used?
-
-Type: `string`
-
-Default: `"nyc3"`
-
-### <a name="input_resize_disk"></a> [resize\_disk](#input\_resize\_disk)
-
-Description: resize disk when resizing the droplet (permanent change)
-
-Type: `bool`
-
-Default: `false`
-
-### <a name="input_ssh_key_ids"></a> [ssh\_key\_ids](#input\_ssh\_key\_ids)
-
-Description: ssh key ids to grant root ssh access. does not create them. if unspecified, all currently available ssh keys will be used (within the  project containing this API token).
-
-Type: `list(number)`
-
-Default: `[]`
-
-### <a name="input_volume_ids"></a> [volume\_ids](#input\_volume\_ids)
-
-Description: list of volumes to be mounted to the created droplet.
-
-Type: `list(number)`
-
-Default: `[]`
-
-### <a name="input_vpc_name"></a> [vpc\_name](#input\_vpc\_name)
-
-Description: name of the VPC to target, if "default" will be appended with -$region
-
-Type: `string`
-
-Default: `"default"`
+| Name | Version |
+|------|---------|
+| <a name="requirement_cloudinit"></a> [cloudinit](#requirement\_cloudinit) | ~> 2.2 |
+| <a name="requirement_digitalocean"></a> [digitalocean](#requirement\_digitalocean) | ~> 2.0 |
+
+## Providers
+
+| Name | Version |
+|------|---------|
+| <a name="provider_cloudinit"></a> [cloudinit](#provider\_cloudinit) | ~> 2.2 |
+| <a name="provider_digitalocean"></a> [digitalocean](#provider\_digitalocean) | ~> 2.0 |
+
+## Resources
+
+| Name | Type |
+|------|------|
+| [digitalocean_droplet.main](https://registry.terraform.io/providers/digitalocean/digitalocean/latest/docs/resources/droplet) | resource |
+| [digitalocean_floating_ip.main](https://registry.terraform.io/providers/digitalocean/digitalocean/latest/docs/resources/floating_ip) | resource |
+| [cloudinit_config.user_data](https://registry.terraform.io/providers/hashicorp/cloudinit/latest/docs/data-sources/config) | data source |
+| [digitalocean_ssh_keys.all](https://registry.terraform.io/providers/digitalocean/digitalocean/latest/docs/data-sources/ssh_keys) | data source |
+| [digitalocean_vpc.main](https://registry.terraform.io/providers/digitalocean/digitalocean/latest/docs/data-sources/vpc) | data source |
+
+## Inputs
+
+| Name | Description | Type | Default | Required |
+|------|-------------|------|---------|:--------:|
+| <a name="input_backups"></a> [backups](#input\_backups) | enable regular digitalocean droplet backups | `bool` | `false` | no |
+| <a name="input_droplet_size"></a> [droplet\_size](#input\_droplet\_size) | which digitalocean droplet size should be used? | `string` | `"s-1vcpu-1gb-intel"` | no |
+| <a name="input_droplet_tags"></a> [droplet\_tags](#input\_droplet\_tags) | tags to apply to droplet. | `list(string)` | `[]` | no |
+| <a name="input_flake_config"></a> [flake\_config](#input\_flake\_config) | file contents of flake.nix (if empty, default will be generated) | `string` | `""` | no |
+| <a name="input_floating_ip"></a> [floating\_ip](#input\_floating\_ip) | reserve a floating IP droplet host? | `bool` | `true` | no |
+| <a name="input_graceful_shutdown"></a> [graceful\_shutdown](#input\_graceful\_shutdown) | allow this droplet to shutdown gracefully? | `bool` | `false` | no |
+| <a name="input_hostname"></a> [hostname](#input\_hostname) | what name should be given to instance? | `string` | `"nixlet"` | no |
+| <a name="input_image"></a> [image](#input\_image) | change this at your own risk. it "just works" like this... | `string` | `"debian-11-x64"` | no |
+| <a name="input_infect_script"></a> [infect\_script](#input\_infect\_script) | file contents of infect.sh (if empty, default will be used) | `string` | `""` | no |
+| <a name="input_ipv6"></a> [ipv6](#input\_ipv6) | enable ipv6? | `bool` | `true` | no |
+| <a name="input_nixos_channel"></a> [nixos\_channel](#input\_nixos\_channel) | which nix channel should be used for managed hosts? | `string` | `"nixos-unstable"` | no |
+| <a name="input_nixos_config"></a> [nixos\_config](#input\_nixos\_config) | file contents of custom.nix (if empty, default will be used) | `string` | `""` | no |
+| <a name="input_nixos_system"></a> [nixos\_system](#input\_nixos\_system) | n/a | `string` | `"x86_64-linux"` | no |
+| <a name="input_region"></a> [region](#input\_region) | which digitalocean region should be used? | `string` | `"nyc3"` | no |
+| <a name="input_resize_disk"></a> [resize\_disk](#input\_resize\_disk) | resize disk when resizing the droplet (permanent change) | `bool` | `false` | no |
+| <a name="input_ssh_key_ids"></a> [ssh\_key\_ids](#input\_ssh\_key\_ids) | ssh key ids to grant root ssh access. does not create them. if unspecified, all currently available ssh keys will be used (within the  project containing this API token). | `list(number)` | `[]` | no |
+| <a name="input_volume_ids"></a> [volume\_ids](#input\_volume\_ids) | list of volumes to be mounted to the created droplet. | `list(number)` | `[]` | no |
+| <a name="input_vpc_name"></a> [vpc\_name](#input\_vpc\_name) | name of the VPC to target, if "default" will be appended with -$region | `string` | `"default"` | no |
 
 ## Outputs
 
-The following outputs are exported:
-
-### <a name="output_droplet"></a> [droplet](#output\_droplet)
-
-Description: (augmented) droplet resource
-
-### <a name="output_floating_ip"></a> [floating\_ip](#output\_floating\_ip)
-
-Description: (augmented) floating\_ip resource
-
-### <a name="output_ipv4_address"></a> [ipv4\_address](#output\_ipv4\_address)
-
-Description: public ipv4 address
-
-### <a name="output_ipv6_address"></a> [ipv6\_address](#output\_ipv6\_address)
-
-Description: public ipv6 address
+| Name | Description |
+|------|-------------|
+| <a name="output_droplet"></a> [droplet](#output\_droplet) | (augmented) droplet resource |
+| <a name="output_floating_ip"></a> [floating\_ip](#output\_floating\_ip) | (augmented) floating\_ip resource |
+| <a name="output_ipv4_address"></a> [ipv4\_address](#output\_ipv4\_address) | public ipv4 address |
+| <a name="output_ipv6_address"></a> [ipv6\_address](#output\_ipv6\_address) | public ipv6 address |
 <!-- END_TF_DOCS -->
 
 
@@ -278,3 +151,11 @@ Description: public ipv6 address
 well, "_future self at 3am_", you can read through the log output from cloud-init with `less /var/log/cloud-init-output.log`. often a small syntax error or a minor typo can cause the initial build to fail. you will almost certainly want to start the provisioning process over entirely after making your correction locally; luckily with [terraform] thats pretty easy: `./terraform.sh apply -destroy`, then `./terraform.sh apply` to create it again.
 
 _NOTE that the documentation is automatically updated by [terraform-docs]._
+
+[terraform-docs]: https://terraform-docs.io
+[terraform]: https://terraform.io
+[digitalocean]: https://digitalocean.com
+[nixos]: https://nixos.org
+[nix]: https://nixos.org
+[`DIGITALOCEAN_TOKEN`]: https://cloud.digitalocean.com/account/api/tokens/new
+[droplet monitoring]: https://docs.digitalocean.com/products/monitoring/details/features/#what-can-the-metrics-agent-access

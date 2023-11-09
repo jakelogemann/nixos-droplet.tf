@@ -1,10 +1,10 @@
 # Ignore everything by default.
 *
 # Allow only what we explicitly want to add.
-!.gitignore
-!.pre-commit-config.yaml
-!LICENSE
-!README.md
-!infect.sh
-!terraform.sh
-!terraform.tf
+!/.gitignore
+!/.pre-commit-config.yaml
+!/LICENSE
+!/README*
+!/infect.sh
+!/terraform.sh
+!/*.tf
