@@ -71,19 +71,29 @@ info 'generate a nixos configuration.' && cat <<-__GENERATED_SYSTEM_CONFIG__ | t
 }
 __GENERATED_SYSTEM_CONFIG__
 
+info 'ensure /etc/NIXOS exists, as required by nixos' && touch /etc/NIXOS
 info 'everything except the files listed below will be purged from the system on reboot:' && cat <<-__PROTECTED_FILES__ | tee /etc/NIXOS_LUSTRATE
 etc/nixos
+etc/NIXOS
 etc/resolv.conf
 var/log/cloud-init-output.log
 root/.nix-defexpr/channels
 $(cd / && ls etc/ssh/ssh_host_*_key* || true)
 __PROTECTED_FILES__
 
-info 'ensure /etc/NIXOS exists, as required by nixos' && touch /etc/NIXOS
-info 'install nix if its not already installed.' && test -r ~/.nix-profile/etc/profile.d/nix.sh || curl -L 'https://nixos.org/nix/install' | sh
+if [[ ! -r ~/install-nix.sh ]]; then
+    info 'download the nix installer script.'
+    curl -Lo ~/install-nix.sh 'https://nixos.org/nix/install'
+fi
+
+if [[ ! -r ~/.nix-profile/etc/profile.d/nix.sh ]]; then
+    info 'install nix if its not already installed.'
+    sh ~/install-nix.sh
+fi
+
 info 'load our nix profile into the current environment.' && source ~/.nix-profile/etc/profile.d/nix.sh
 info 'use specified nix-channel' && nix-channel --remove nixpkgs && nix-channel --add "https://nixos.org/channels/${NIX_CHANNEL:-nixos-unstable}" nixos
-info 'update our nix-channel cache.' && nix-channel --update 
+info 'update our nix-channel cache.' && nix-channel --update
 
 info 'build our (future) nixos "system" profile from the "default" nix profile for the root user.'
 if test -r '/etc/nixos/flake.nix'; then
@@ -99,11 +109,14 @@ fi
 # Stage the Nix coup d'état
 # Unless otherwise specified, its time to start preparing/activating the NixOS "system" profile.
 if [[ -z "${NO_ACTIVATE:-}" ]]; then
-    info 'Cleanup "default" nix installation for the root user.'
-    rm -fv /nix/var/nix/profiles/default* && /nix/var/nix/profiles/system/sw/bin/nix-collect-garbage
+    info 'Cleanup "default" nix installation for the root user.' && rm -fv /nix/var/nix/profiles/default*
+    info 'Run nix-collect-garbage' && /nix/var/nix/profiles/system/sw/bin/nix-collect-garbage
 
-    info 'reify resolv.conf'
-    [[ -L /etc/resolv.conf ]] && mv -v /etc/resolv.conf /etc/resolv.conf.lnk && cat /etc/resolv.conf.lnk > /etc/resolv.conf
+    if [[ -L /etc/resolv.conf ]]; then
+      info 'reify resolv.conf'
+      mv -v /etc/resolv.conf /etc/resolv.conf.lnk
+      cat /etc/resolv.conf.lnk > /etc/resolv.conf
+    fi
 
     info 'create a safe copy of the boot directory' && if test -d /boot; then
       # We make a copy of the boot directory, if it exists, in case we hope to recover later.
