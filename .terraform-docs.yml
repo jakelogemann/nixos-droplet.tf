@@ -1,0 +1,16 @@
+formatter: "markdown table"
+
+output:
+  mode: inject
+  file: "README.md"
+
+sort:
+  by: required
+  enabled: true
+
+settings:
+  hide-empty: true
+  description: true
+
+sections:
+  hide: [requirements]
